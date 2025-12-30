@@ -365,9 +365,7 @@ const FinancialWebsite = () => {
                 }`}
               >
                 <Icon className={`transition-all duration-300 ${isActive ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-4 h-4 sm:w-5 sm:h-5'}`} />
-                <span className={`text-[10px] sm:text-xs font-medium transition-all duration-300 whitespace-nowrap ${
-                  isActive ? 'opacity-100' : 'opacity-0 md:opacity-100'
-                }`}>
+                <span className="text-[10px] sm:text-xs font-medium transition-all duration-300 whitespace-nowrap">
                   {item.label}
                 </span>
                 {isActive && (
