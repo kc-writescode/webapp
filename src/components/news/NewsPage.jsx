@@ -20,6 +20,7 @@ const NewsPage = () => {
   const [category, setCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [fromCache, setFromCache] = useState(false);
+  const [isSampleData, setIsSampleData] = useState(false);
 
   // Load news based on category
   const loadNews = useCallback(async () => {
@@ -36,6 +37,7 @@ const NewsPage = () => {
 
       setArticles(result.articles);
       setFromCache(result.fromCache);
+      setIsSampleData(result.isSampleData || false);
     } catch (err) {
       console.error('Error loading news:', err);
       setError(err.message || 'Failed to load news. Please try again.');
@@ -75,14 +77,18 @@ const NewsPage = () => {
           </p>
         </div>
 
-        {/* Cache Indicator & Refresh */}
+        {/* Sample Data / Cache Indicator & Refresh */}
         <div className="flex items-center justify-between mb-6">
-          {fromCache && (
+          {isSampleData ? (
+            <div className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+              <span className="text-xs text-purple-400">📰 Showing sample news (API requires paid plan for production)</span>
+            </div>
+          ) : fromCache ? (
             <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
               <span className="text-xs text-yellow-400">📦 Showing cached news</span>
             </div>
-          )}
-          <div className={!fromCache ? 'w-full flex justify-end' : ''}>
+          ) : null}
+          <div className={!fromCache && !isSampleData ? 'w-full flex justify-end' : ''}>
             <Button
               variant="outline"
               size="sm"
