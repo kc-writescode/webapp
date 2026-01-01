@@ -10,14 +10,10 @@ import {
   Mail,
   Phone,
   Calendar,
-  Shield,
   Edit2,
   Save,
   X,
   LogOut,
-  Trash2,
-  Download,
-  Upload,
   Target,
   Receipt,
   TrendingUp,
@@ -26,7 +22,7 @@ import {
   Star,
   Clock,
   ChevronRight,
-  Award,
+  ChevronDown,
   PiggyBank,
   Wallet,
 } from 'lucide-react';
@@ -41,7 +37,6 @@ import Input from '@components/common/Input';
 import Modal from '@components/common/Modal';
 import AchievementBadges from './AchievementBadges';
 import { formatCurrency, formatDate, formatDistanceToNow } from '@utils/formatters';
-import { exportData, importData } from '@utils/localStorage';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -58,7 +53,7 @@ const ProfilePage = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -188,47 +183,6 @@ const ProfilePage = () => {
       phoneNumber: user?.phoneNumber || '',
     });
     setIsEditing(false);
-  };
-
-  const handleExportData = () => {
-    try {
-      const data = exportData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `finlit_backup_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast.success('Data exported successfully!');
-    } catch {
-      toast.error('Failed to export data');
-    }
-  };
-
-  const handleImportData = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target.result);
-        if (importData(data)) {
-          toast.success('Data imported successfully! Refreshing...');
-          setTimeout(() => window.location.reload(), 1500);
-        } else {
-          toast.error('Failed to import data');
-        }
-      } catch {
-        toast.error('Invalid backup file');
-      }
-    };
-    reader.readAsText(file);
   };
 
   const handleLogout = () => {
@@ -496,7 +450,7 @@ const ProfilePage = () => {
                 <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-700" />
 
                 <div className="space-y-4">
-                  {activityTimeline.map((activity, index) => {
+                  {(showAllActivity ? activityTimeline : activityTimeline.slice(0, 3)).map((activity) => {
                     const IconComponent = activity.icon;
                     return (
                       <div key={activity.id} className="relative flex items-start gap-4 pl-2">
@@ -521,41 +475,28 @@ const ProfilePage = () => {
                     );
                   })}
                 </div>
+
+                {/* See more / See less button */}
+                {activityTimeline.length > 3 && (
+                  <button
+                    onClick={() => setShowAllActivity(!showAllActivity)}
+                    className="mt-4 w-full flex items-center justify-center gap-2 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    {showAllActivity ? (
+                      <>
+                        Show Less
+                        <ChevronDown className="w-4 h-4 rotate-180" />
+                      </>
+                    ) : (
+                      <>
+                        See More ({activityTimeline.length - 3} more)
+                        <ChevronDown className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             )}
-          </Card>
-
-          {/* Data Management */}
-          <Card title="Data Management" icon={Shield} className="lg:col-span-2">
-            <div className="space-y-4">
-              <p className="text-sm text-slate-400">
-                Export your data for backup or import from a previous backup file.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" icon={Download} onClick={handleExportData}>
-                  Export Backup
-                </Button>
-                <label>
-                  <Button variant="outline" icon={Upload} as="span">
-                    Import Backup
-                  </Button>
-                  <input
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleImportData}
-                  />
-                </label>
-              </div>
-
-              <div className="pt-4 border-t border-slate-700">
-                <p className="text-sm text-slate-500 mb-3">
-                  Your data is stored locally on this device. Exporting a backup
-                  ensures you don't lose your financial history.
-                </p>
-              </div>
-            </div>
           </Card>
 
           {/* Account Actions */}
