@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { ThumbsUp, ThumbsDown, MessageSquare, Trash2, Clock, Star, Pencil, X, Save, Bookmark } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Trash2, Clock, Pencil, X, Save, Bookmark } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
 import { useAchievements } from '@contexts/AchievementContext';
@@ -167,12 +167,6 @@ const PostCard = ({ post }) => {
                     <span className="text-sm font-semibold text-white">
                       {post.username}
                     </span>
-                    {post.karma > 0 && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-yellow-500/20 rounded text-xs text-yellow-400" title="Karma points">
-                        <Star className="w-3 h-3" />
-                        {post.karma}
-                      </span>
-                    )}
                     <span className="text-xs text-slate-500">•</span>
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />

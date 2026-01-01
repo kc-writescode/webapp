@@ -66,7 +66,6 @@ export const AuthProvider = ({ children }) => {
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3b82f6&color=fff`,
         createdAt: Date.now(),
         preferences: { ...DEFAULT_PREFERENCES },
-        karma: 0,
         bookmarkedPosts: [],
       };
 
@@ -100,7 +99,6 @@ export const AuthProvider = ({ children }) => {
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3b82f6&color=fff`,
         createdAt: Date.now(),
         preferences: { ...DEFAULT_PREFERENCES },
-        karma: 0,
         bookmarkedPosts: [],
       };
 
@@ -177,27 +175,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
-  // Update karma
-  const updateKarma = useCallback((delta) => {
-    try {
-      if (!user) return { success: false };
-
-      const updatedUser = {
-        ...user,
-        karma: (user.karma || 0) + delta,
-        updatedAt: Date.now(),
-      };
-
-      setItem(STORAGE_KEYS.USER, updatedUser);
-      setUser(updatedUser);
-
-      return { success: true, user: updatedUser };
-    } catch (error) {
-      console.error('Update karma error:', error);
-      return { success: false };
-    }
-  }, [user]);
-
   // Toggle bookmark on a post
   const toggleBookmark = useCallback((postId) => {
     try {
@@ -241,7 +218,6 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     updatePreferences,
-    updateKarma,
     toggleBookmark,
     isPostBookmarked,
   };

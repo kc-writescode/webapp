@@ -19,7 +19,6 @@ import {
   TrendingUp,
   MessageSquare,
   Bookmark,
-  Star,
   Clock,
   ChevronRight,
   ChevronDown,
@@ -340,17 +339,6 @@ const ProfilePage = () => {
                 </div>
                 <span className="text-lg font-bold text-white">
                   {stats.userPosts}
-                </span>
-              </div>
-
-              {/* Karma display */}
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm text-slate-300">Karma Points</span>
-                </div>
-                <span className="text-lg font-bold text-yellow-400">
-                  {user.karma || 0}
                 </span>
               </div>
             </div>

@@ -267,7 +267,7 @@ const FinancialWebsite = () => {
 
   const handleAuth = useCallback(() => {
     if (authUsername.trim()) {
-      setUser({ username: authUsername, avatar: '👤', karma: authMode === 'login' ? 127 : 0 });
+      setUser({ username: authUsername, avatar: '👤' });
       setShowAuthModal(false);
       setAuthUsername('');
       setAuthPassword('');
@@ -463,13 +463,7 @@ const FinancialWebsite = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700 hover:border-blue-500 transition-colors">
                 <span className="text-2xl">{user.avatar}</span>
-                <div>
-                  <div className="font-semibold text-white">{user.username}</div>
-                  <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <Award className="w-3 h-3" />
-                    {user.karma} karma
-                  </div>
-                </div>
+                <div className="font-semibold text-white">{user.username}</div>
               </div>
               <button
                 onClick={() => setUser(null)}

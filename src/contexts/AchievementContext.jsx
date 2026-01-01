@@ -94,8 +94,6 @@ export const AchievementProvider = ({ children }) => {
         return currentStats.postCount >= criteria.value;
       case 'upvotes_received':
         return currentStats.upvotesReceived >= criteria.value;
-      case 'karma':
-        return (user?.karma || 0) >= criteria.value;
       case 'streak_days':
         return currentStats.currentStreak >= criteria.value || currentStats.longestStreak >= criteria.value;
       case 'calculators_used':
@@ -347,9 +345,6 @@ export const AchievementProvider = ({ children }) => {
         break;
       case 'upvotes_received':
         current = stats.upvotesReceived;
-        break;
-      case 'karma':
-        current = user?.karma || 0;
         break;
       case 'streak_days':
         current = Math.max(stats.currentStreak, stats.longestStreak);

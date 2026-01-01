@@ -126,10 +126,10 @@ export const BADGES = {
   INFLUENCER: {
     id: 'influencer',
     name: 'Influencer',
-    description: 'Reach 100 karma points',
+    description: 'Receive 50 upvotes on your posts or comments',
     icon: '👑',
     category: BADGE_CATEGORIES.COMMUNITY,
-    criteria: { type: 'karma', value: 100 },
+    criteria: { type: 'upvotes_received', value: 50 },
   },
 
   // Consistency

@@ -1,17 +1,17 @@
 /**
  * Leaderboard Component
- * Shows top contributors by karma
+ * Shows top contributors by upvotes and posts
  */
 
 import { useMemo } from 'react';
 import { useCommunity } from '@contexts/CommunityContext';
-import { Crown, Medal, Star } from 'lucide-react';
+import { Crown, Medal, ThumbsUp } from 'lucide-react';
 import Card from '@components/common/Card';
 
 const Leaderboard = () => {
   const { posts } = useCommunity();
 
-  // Calculate karma for each user based on their posts
+  // Calculate engagement score for each user based on their posts
   const topContributors = useMemo(() => {
     const userStats = {};
 
@@ -22,7 +22,6 @@ const Leaderboard = () => {
           userId,
           username: post.username,
           avatar: post.avatar,
-          karma: post.karma || 0,
           postCount: 0,
           totalUpvotes: 0,
         };
@@ -30,18 +29,13 @@ const Leaderboard = () => {
 
       userStats[userId].postCount += 1;
       userStats[userId].totalUpvotes += post.upvotes;
-      // Calculate karma: base karma + post karma (10 per post, 1 per upvote)
-      userStats[userId].karma = Math.max(
-        userStats[userId].karma,
-        post.karma || 0
-      );
     });
 
-    // Sort by karma (or upvotes if karma is same)
+    // Sort by total upvotes (then by post count if same)
     return Object.values(userStats)
       .sort((a, b) => {
-        if (b.karma !== a.karma) return b.karma - a.karma;
-        return b.totalUpvotes - a.totalUpvotes;
+        if (b.totalUpvotes !== a.totalUpvotes) return b.totalUpvotes - a.totalUpvotes;
+        return b.postCount - a.postCount;
       })
       .slice(0, 5);
   }, [posts]);
@@ -106,10 +100,10 @@ const Leaderboard = () => {
               </p>
             </div>
 
-            {/* Karma */}
-            <div className="flex items-center gap-1 text-yellow-400">
-              <Star className="w-3.5 h-3.5" />
-              <span className="text-sm font-bold">{contributor.karma}</span>
+            {/* Upvotes */}
+            <div className="flex items-center gap-1 text-green-400">
+              <ThumbsUp className="w-3.5 h-3.5" />
+              <span className="text-sm font-bold">{contributor.totalUpvotes}</span>
             </div>
           </div>
         ))}
