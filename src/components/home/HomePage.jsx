@@ -13,12 +13,12 @@ import {
   Calculator,
   MessageSquare,
   Target,
-  Shield,
   ArrowRight,
   CheckCircle,
   Sparkles,
-  Home as HomeIcon,
-  Landmark,
+  BookOpen,
+  Download,
+  FileText,
 } from 'lucide-react';
 import TopHeader from '@components/layout/TopHeader';
 import Button from '@components/common/Button';
@@ -82,13 +82,35 @@ const HomePage = () => {
     },
   ];
 
-  const calculators = [
-    { name: 'SIP Calculator', desc: 'Calculate mutual fund returns', icon: TrendingUp },
-    { name: 'EMI Calculator', desc: 'Loan repayment planning', icon: HomeIcon },
-    { name: 'Income Tax', desc: 'FY 2025-26 tax calculator', icon: Receipt },
-    { name: 'PPF Calculator', desc: 'Public Provident Fund', icon: Shield },
-    { name: 'NPS Calculator', desc: 'National Pension System', icon: Landmark },
-    { name: 'Retirement', desc: 'Retirement corpus planning', icon: Target },
+  const freeEbooks = [
+    {
+      title: 'Understanding Credit Score',
+      subtitle: 'Why It Matters and How to Improve',
+      description: 'Learn how credit scores work in India and actionable tips to build a strong credit profile.',
+      color: 'from-blue-500 to-cyan-500',
+      file: '/files/Understanding-Credit-Score-Why-It-Matters-and-How-to-Improve.pdf',
+    },
+    {
+      title: 'Understanding EMI in India',
+      subtitle: 'Benefits and the Hidden Trap',
+      description: 'Discover how EMIs work, their advantages, and the common pitfalls to avoid.',
+      color: 'from-orange-500 to-red-500',
+      file: '/files/Understanding-EMI-in-India-Benefits-and-the-Hidden-Trap.pdf',
+    },
+    {
+      title: 'Understanding Health Insurance',
+      subtitle: 'Why It Matters for Every Indian',
+      description: 'A comprehensive guide to health insurance coverage and choosing the right plan.',
+      color: 'from-green-500 to-emerald-500',
+      file: '/files/Understanding-Health-Insurance-Why-It-Matters-for-Every-Indian.pdf',
+    },
+    {
+      title: 'Benefits of Filing Income Tax Returns',
+      subtitle: 'A Simple Guide for Everyone',
+      description: 'Understand why filing ITR is important and the benefits it brings beyond compliance.',
+      color: 'from-purple-500 to-pink-500',
+      file: '/files/The-Benefits-of-Filing-Income-Tax-Returns-in-India-A-Simple-Guide-for-Everyone.pdf',
+    },
   ];
 
   const benefits = [
@@ -218,50 +240,56 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Calculators Section */}
+      {/* Free Resources Section */}
       <section className="py-20 px-4 bg-slate-900/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
+            <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
+              <BookOpen className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm text-emerald-400 font-medium">Free Downloads</span>
+            </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-              Free Tools
+              Free Resources
             </h2>
             <p className="text-xl text-slate-400">
-              Updated with FY 2025-26 tax slabs and current interest rates
+              Download our free eBooks to boost your financial literacy
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {calculators.map((calc, index) => {
-              const Icon = calc.icon;
-              return (
-                <div
-                  key={index}
-                  onClick={() => navigate('/calculators')}
-                  className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:bg-slate-800/70 hover:border-blue-500/50 transition-all duration-300"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-blue-500/10 rounded-lg">
-                      <Icon className="w-6 h-6 text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white mb-1">{calc.name}</h3>
-                      <p className="text-sm text-slate-400">{calc.desc}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {freeEbooks.map((ebook, index) => (
+              <a
+                key={index}
+                href={ebook.file}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`p-4 bg-gradient-to-br ${ebook.color} rounded-xl flex-shrink-0`}>
+                    <FileText className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                      {ebook.title}
+                    </h3>
+                    <p className="text-sm text-slate-300 mb-2">{ebook.subtitle}</p>
+                    <p className="text-sm text-slate-400 mb-4">{ebook.description}</p>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
+                      <Download className="w-4 h-4" />
+                      <span>Download Free PDF</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </a>
+            ))}
           </div>
 
           <div className="text-center mt-12">
-            <Button
-              variant="primary"
-              size="lg"
-              icon={Calculator}
-              onClick={() => navigate('/calculators')}
-            >
-              View All Calculators
-            </Button>
+            <p className="text-slate-400 text-sm">
+              All resources are 100% free • No signup required • Instant download
+            </p>
           </div>
         </div>
       </section>
