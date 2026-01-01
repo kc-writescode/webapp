@@ -13,14 +13,19 @@ import Button from '@components/common/Button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const NPSCalculator = () => {
-  const [monthlyContribution, setMonthlyContribution] = useState(5000);
-  const [currentAge, setCurrentAge] = useState(30);
-  const [retirementAge, setRetirementAge] = useState(60);
-  const [expectedReturn, setExpectedReturn] = useState(10);
+  const [monthlyContribution, setMonthlyContribution] = useState('5000');
+  const [currentAge, setCurrentAge] = useState('30');
+  const [retirementAge, setRetirementAge] = useState('60');
+  const [expectedReturn, setExpectedReturn] = useState('10');
   const [results, setResults] = useState(null);
 
   const handleCalculate = () => {
-    const result = calculateNPS(monthlyContribution, currentAge, retirementAge, expectedReturn);
+    const result = calculateNPS(
+      Number(monthlyContribution) || 0,
+      Number(currentAge) || 30,
+      Number(retirementAge) || 60,
+      Number(expectedReturn) || 10
+    );
     setResults(result);
   };
 
@@ -41,9 +46,8 @@ const NPSCalculator = () => {
             <Input
               type="number"
               value={monthlyContribution}
-              onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+              onChange={(e) => setMonthlyContribution(e.target.value)}
               min="500"
-              step="500"
             />
             <div className="mt-2">
               <input
@@ -51,12 +55,12 @@ const NPSCalculator = () => {
                 min="500"
                 max="50000"
                 step="500"
-                value={monthlyContribution}
-                onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+                value={Number(monthlyContribution) || 500}
+                onChange={(e) => setMonthlyContribution(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">{formatCurrency(monthlyContribution)} per month</p>
+            <p className="text-xs text-slate-400 mt-1">{formatCurrency(Number(monthlyContribution) || 0)} per month</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -67,7 +71,7 @@ const NPSCalculator = () => {
               <Input
                 type="number"
                 value={currentAge}
-                onChange={(e) => setCurrentAge(Number(e.target.value))}
+                onChange={(e) => setCurrentAge(e.target.value)}
                 min="18"
                 max="65"
               />
@@ -80,7 +84,7 @@ const NPSCalculator = () => {
               <Input
                 type="number"
                 value={retirementAge}
-                onChange={(e) => setRetirementAge(Number(e.target.value))}
+                onChange={(e) => setRetirementAge(e.target.value)}
                 min="60"
                 max="75"
               />
@@ -94,10 +98,9 @@ const NPSCalculator = () => {
             <Input
               type="number"
               value={expectedReturn}
-              onChange={(e) => setExpectedReturn(Number(e.target.value))}
+              onChange={(e) => setExpectedReturn(e.target.value)}
               min="1"
               max="15"
-              step="0.5"
             />
             <div className="mt-2">
               <input
@@ -105,13 +108,13 @@ const NPSCalculator = () => {
                 min="1"
                 max="15"
                 step="0.5"
-                value={expectedReturn}
-                onChange={(e) => setExpectedReturn(Number(e.target.value))}
+                value={Number(expectedReturn) || 1}
+                onChange={(e) => setExpectedReturn(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              {expectedReturn}% per annum (Historical NPS returns: 9-12%)
+              {expectedReturn || 0}% per annum (Historical NPS returns: 9-12%)
             </p>
           </div>
 
@@ -133,7 +136,7 @@ const NPSCalculator = () => {
                   {formatCurrency(results.totalInvested)}
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Over {retirementAge - currentAge} years
+                  Over {(Number(retirementAge) || 60) - (Number(currentAge) || 30)} years
                 </p>
               </div>
             </Card>
@@ -144,7 +147,7 @@ const NPSCalculator = () => {
                 <h3 className="text-2xl font-bold text-emerald-400">
                   {formatCurrency(results.maturityCorpus)}
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">At age {retirementAge}</p>
+                <p className="text-xs text-slate-400 mt-1">At age {retirementAge || 60}</p>
               </div>
             </Card>
           </div>

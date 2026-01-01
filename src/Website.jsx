@@ -30,7 +30,7 @@ const FinancialWebsite = () => {
       id: 2,
       author: 'TaxSaver2024',
       avatar: '💰',
-      title: 'Best tax-saving options under 80C for FY 2024-25?',
+      title: 'Best tax-saving options under 80C for FY 2025-26?',
       content: 'Looking for recommendations beyond PPF and ELSS. What are you all investing in this year?',
       category: 'Taxation',
       upvotes: 67,

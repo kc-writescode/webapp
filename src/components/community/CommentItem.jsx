@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowUp, ArrowDown, MessageSquare, Clock } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
 import Button from '@components/common/Button';
@@ -66,20 +66,20 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
             disabled={!user}
             className={`p-1 rounded transition-all ${
               userVote === 'upvote'
-                ? 'bg-orange-500/20 text-orange-400'
-                : 'text-slate-400 hover:bg-slate-700 hover:text-orange-400'
-            } ${!user && 'opacity-50 cursor-not-allowed'}`}
-            title={!user ? 'Login to vote' : 'Upvote'}
+                ? 'bg-green-500/20 text-green-400'
+                : 'text-slate-400 hover:bg-slate-700 hover:text-green-400'
+            } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={!user ? 'Login to like' : 'Like'}
           >
-            <ArrowUp className="w-4 h-4" />
+            <ThumbsUp className="w-4 h-4" />
           </button>
 
           <span
             className={`text-xs font-bold ${
               score > 0
-                ? 'text-orange-400'
+                ? 'text-green-400'
                 : score < 0
-                ? 'text-blue-400'
+                ? 'text-red-400'
                 : 'text-slate-400'
             }`}
           >
@@ -91,12 +91,12 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
             disabled={!user}
             className={`p-1 rounded transition-all ${
               userVote === 'downvote'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'text-slate-400 hover:bg-slate-700 hover:text-blue-400'
-            } ${!user && 'opacity-50 cursor-not-allowed'}`}
-            title={!user ? 'Login to vote' : 'Downvote'}
+                ? 'bg-red-500/20 text-red-400'
+                : 'text-slate-400 hover:bg-slate-700 hover:text-red-400'
+            } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={!user ? 'Login to dislike' : 'Dislike'}
           >
-            <ArrowDown className="w-4 h-4" />
+            <ThumbsDown className="w-4 h-4" />
           </button>
         </div>
 

@@ -3,7 +3,7 @@
  * Reusable input field with validation and error states
  */
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useRef, useImperativeHandle } from 'react';
 
 const Input = forwardRef(({
   label,
@@ -20,8 +20,14 @@ const Input = forwardRef(({
   disabled = false,
   className = '',
   inputClassName = '',
+  onIconClick,
   ...props
 }, ref) => {
+  const inputRef = useRef(null);
+
+  // Forward the ref while also keeping our internal ref
+  useImperativeHandle(ref, () => inputRef.current);
+
   const baseInputStyles = 'w-full bg-slate-900/50 border rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 transition-all duration-200 focus:outline-none focus:ring-2';
 
   const stateStyles = error
@@ -31,6 +37,17 @@ const Input = forwardRef(({
   const disabledStyles = disabled ? 'opacity-50 cursor-not-allowed' : '';
 
   const iconClass = Icon ? (iconPosition === 'left' ? 'pl-11' : 'pr-11') : '';
+
+  // Handle icon click - for date inputs, open the picker
+  const handleIconClick = () => {
+    if (onIconClick) {
+      onIconClick();
+    } else if (type === 'date' && inputRef.current) {
+      inputRef.current.showPicker?.();
+    }
+  };
+
+  const isClickableIcon = onIconClick || type === 'date';
 
   return (
     <div className={`w-full ${className}`}>
@@ -46,13 +63,16 @@ const Input = forwardRef(({
 
       <div className="relative">
         {Icon && iconPosition === 'left' && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <div
+            className={`absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 ${isClickableIcon ? 'cursor-pointer hover:text-slate-200 transition-colors' : ''}`}
+            onClick={isClickableIcon ? handleIconClick : undefined}
+          >
             <Icon size={20} />
           </div>
         )}
 
         <input
-          ref={ref}
+          ref={inputRef}
           type={type}
           name={name}
           id={name}
@@ -65,7 +85,10 @@ const Input = forwardRef(({
         />
 
         {Icon && iconPosition === 'right' && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <div
+            className={`absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 ${isClickableIcon ? 'cursor-pointer hover:text-slate-200 transition-colors' : ''}`}
+            onClick={isClickableIcon ? handleIconClick : undefined}
+          >
             <Icon size={20} />
           </div>
         )}

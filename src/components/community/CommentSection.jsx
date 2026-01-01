@@ -8,6 +8,7 @@ import { MessageSquare } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
 import Button from '@components/common/Button';
+import AuthModal from '@components/auth/AuthModal';
 import CommentItem from './CommentItem';
 
 const CommentSection = ({ postId, comments }) => {
@@ -15,6 +16,7 @@ const CommentSection = ({ postId, comments }) => {
   const { user } = useAuth();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -89,11 +91,20 @@ const CommentSection = ({ postId, comments }) => {
 
       {!user && (
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg text-center">
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 text-sm mb-3">
             Please login to add comments
           </p>
+          <Button variant="primary" size="sm" onClick={() => setShowAuthModal(true)}>
+            Login / Sign Up
+          </Button>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
 
       {/* Comments List */}
       {comments.length > 0 ? (

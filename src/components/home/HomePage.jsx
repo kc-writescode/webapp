@@ -67,7 +67,7 @@ const HomePage = () => {
     {
       icon: Calculator,
       title: 'Free Tools',
-      description: 'SIP, EMI, Tax, PPF, NPS calculators with FY 2024-25 rates',
+      description: 'SIP, EMI, Tax, PPF, NPS calculators with FY 2025-26 rates',
       color: 'from-purple-500 to-pink-500',
       path: '/calculators',
       auth: false,
@@ -85,7 +85,7 @@ const HomePage = () => {
   const calculators = [
     { name: 'SIP Calculator', desc: 'Calculate mutual fund returns', icon: TrendingUp },
     { name: 'EMI Calculator', desc: 'Loan repayment planning', icon: HomeIcon },
-    { name: 'Income Tax', desc: 'FY 2024-25 tax calculator', icon: Receipt },
+    { name: 'Income Tax', desc: 'FY 2025-26 tax calculator', icon: Receipt },
     { name: 'PPF Calculator', desc: 'Public Provident Fund', icon: Shield },
     { name: 'NPS Calculator', desc: 'National Pension System', icon: Landmark },
     { name: 'Retirement', desc: 'Retirement corpus planning', icon: Target },
@@ -94,7 +94,7 @@ const HomePage = () => {
   const benefits = [
     { text: '100% Free to use', icon: CheckCircle },
     { text: 'Indian market focused', icon: CheckCircle },
-    { text: 'Latest FY 2024-25 tax slabs', icon: CheckCircle },
+    { text: 'Latest FY 2025-26 tax slabs', icon: CheckCircle },
     { text: 'UPI & digital payments', icon: CheckCircle },
     { text: 'Real-time market data', icon: CheckCircle },
     { text: 'Secure local storage', icon: CheckCircle },
@@ -128,7 +128,7 @@ const HomePage = () => {
 
           <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto">
             Complete personal finance platform with expense tracking, market data,
-            and Indian tax calculators (FY 2024-25)
+            and Indian tax calculators (FY 2025-26)
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -226,7 +226,7 @@ const HomePage = () => {
               Free Tools
             </h2>
             <p className="text-xl text-slate-400">
-              Updated with FY 2024-25 tax slabs and current interest rates
+              Updated with FY 2025-26 tax slabs and current interest rates
             </p>
           </div>
 

@@ -11,6 +11,7 @@ import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
 import Modal from '@components/common/Modal';
+import AuthModal from '@components/auth/AuthModal';
 import PostCard from './PostCard';
 import CreatePostForm from './CreatePostForm';
 
@@ -18,6 +19,7 @@ const CommunityPage = () => {
   const { posts, loading } = useCommunity();
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [sortBy, setSortBy] = useState('new'); // 'new', 'hot', 'top'
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -57,7 +59,7 @@ const CommunityPage = () => {
 
   const handleCreatePost = () => {
     if (!user) {
-      alert('Please login to create a post');
+      setShowAuthModal(true);
       return;
     }
     setShowCreateModal(true);
@@ -249,6 +251,12 @@ const CommunityPage = () => {
       >
         <CreatePostForm onClose={() => setShowCreateModal(false)} />
       </Modal>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </PageLayout>
   );
 };

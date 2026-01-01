@@ -13,19 +13,19 @@ import Button from '@components/common/Button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const EMICalculator = () => {
-  const [principal, setPrincipal] = useState(1000000);
-  const [annualRate, setAnnualRate] = useState(8.5);
-  const [tenureYears, setTenureYears] = useState(20);
+  const [principal, setPrincipal] = useState('1000000');
+  const [annualRate, setAnnualRate] = useState('8.5');
+  const [tenureYears, setTenureYears] = useState('20');
   const [results, setResults] = useState(null);
 
   const handleCalculate = () => {
-    const tenureMonths = tenureYears * 12;
-    const result = calculateEMI(principal, annualRate, tenureMonths);
+    const tenureMonths = (Number(tenureYears) || 0) * 12;
+    const result = calculateEMI(Number(principal) || 0, Number(annualRate) || 0, tenureMonths);
     setResults(result);
   };
 
   const pieData = results ? [
-    { name: 'Principal', value: principal, color: '#3b82f6' },
+    { name: 'Principal', value: Number(principal) || 0, color: '#3b82f6' },
     { name: 'Interest', value: results.totalInterest, color: '#ef4444' },
   ] : [];
 
@@ -55,9 +55,8 @@ const EMICalculator = () => {
             <Input
               type="number"
               value={principal}
-              onChange={(e) => setPrincipal(Number(e.target.value))}
+              onChange={(e) => setPrincipal(e.target.value)}
               min="10000"
-              step="10000"
             />
             <div className="mt-2">
               <input
@@ -65,12 +64,12 @@ const EMICalculator = () => {
                 min="100000"
                 max="10000000"
                 step="100000"
-                value={principal}
-                onChange={(e) => setPrincipal(Number(e.target.value))}
+                value={Number(principal) || 100000}
+                onChange={(e) => setPrincipal(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">{formatCurrency(principal)}</p>
+            <p className="text-xs text-slate-400 mt-1">{formatCurrency(Number(principal) || 0)}</p>
           </div>
 
           <div>
@@ -80,10 +79,9 @@ const EMICalculator = () => {
             <Input
               type="number"
               value={annualRate}
-              onChange={(e) => setAnnualRate(Number(e.target.value))}
+              onChange={(e) => setAnnualRate(e.target.value)}
               min="1"
               max="20"
-              step="0.1"
             />
             <div className="mt-2">
               <input
@@ -91,12 +89,12 @@ const EMICalculator = () => {
                 min="1"
                 max="20"
                 step="0.1"
-                value={annualRate}
-                onChange={(e) => setAnnualRate(Number(e.target.value))}
+                value={Number(annualRate) || 1}
+                onChange={(e) => setAnnualRate(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">{annualRate}% per annum</p>
+            <p className="text-xs text-slate-400 mt-1">{annualRate || 0}% per annum</p>
           </div>
 
           <div>
@@ -106,10 +104,9 @@ const EMICalculator = () => {
             <Input
               type="number"
               value={tenureYears}
-              onChange={(e) => setTenureYears(Number(e.target.value))}
+              onChange={(e) => setTenureYears(e.target.value)}
               min="1"
               max="30"
-              step="1"
             />
             <div className="mt-2">
               <input
@@ -117,13 +114,13 @@ const EMICalculator = () => {
                 min="1"
                 max="30"
                 step="1"
-                value={tenureYears}
-                onChange={(e) => setTenureYears(Number(e.target.value))}
+                value={Number(tenureYears) || 1}
+                onChange={(e) => setTenureYears(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
               />
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              {tenureYears} years ({tenureYears * 12} months)
+              {tenureYears || 0} years ({(Number(tenureYears) || 0) * 12} months)
             </p>
           </div>
 

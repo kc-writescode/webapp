@@ -4,11 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { X, Mail } from 'lucide-react';
+import { X, Mail, Eye, EyeOff, Phone } from 'lucide-react';
 import { useAuth } from '@contexts/AuthContext';
 import Input from '@components/common/Input';
 import Button from '@components/common/Button';
-import { validateUsername, validatePassword, validateEmail } from '@utils/validators';
+import { validateUsername, validatePassword, validateEmail, validateIndianPhone } from '@utils/validators';
 
 const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const { login, signup } = useAuth();
@@ -17,10 +17,12 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     username: '',
     email: '',
     password: '',
+    phoneNumber: '',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,6 +46,11 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       const emailValidation = validateEmail(formData.email);
       if (!emailValidation.isValid) {
         newErrors.email = emailValidation.error;
+      }
+
+      const phoneValidation = validateIndianPhone(formData.phoneNumber);
+      if (!phoneValidation.isValid) {
+        newErrors.phoneNumber = phoneValidation.error;
       }
     }
 
@@ -71,12 +78,12 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       if (authMode === 'login') {
         result = login(formData.username, formData.password);
       } else {
-        result = signup(formData.username, formData.email, formData.password);
+        result = signup(formData.username, formData.email, formData.password, formData.phoneNumber);
       }
 
       if (result.success) {
         // Clear form
-        setFormData({ username: '', email: '', password: '' });
+        setFormData({ username: '', email: '', password: '', phoneNumber: '' });
         setErrors({});
         onClose();
       } else {
@@ -146,31 +153,56 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
           />
 
           {authMode === 'signup' && (
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter your email"
-              error={errors.email}
-              icon={Mail}
-              required
-            />
+            <>
+              <Input
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter your email"
+                error={errors.email}
+                icon={Mail}
+                required
+              />
+
+              <Input
+                label="Mobile Number"
+                name="phoneNumber"
+                type="tel"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                placeholder="+91 XXXXX XXXXX"
+                error={errors.phoneNumber}
+                icon={Phone}
+                required
+              />
+            </>
           )}
 
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-            placeholder="Enter your password"
-            error={errors.password}
-            required
-          />
+          <div className="relative">
+            <Input
+              label="Password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter your password"
+              error={errors.password}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-9 text-slate-400 hover:text-slate-200 transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
 
           <Button
             type="submit"

@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import Input from '@components/common/Input';
 import Button from '@components/common/Button';
-import { DollarSign, Plus, TrendingUp } from 'lucide-react';
+import { IndianRupee, Plus, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@utils/formatters';
 import GoalProgress from './GoalProgress';
 
@@ -77,8 +77,8 @@ const ContributionModal = ({ goal, onSubmit, onClose, loading = false }) => {
           }}
           placeholder="Enter amount"
           min="1"
-          step="100"
-          icon={DollarSign}
+          step="1"
+          icon={IndianRupee}
           error={error}
           disabled={loading}
           autoFocus

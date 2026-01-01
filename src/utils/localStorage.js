@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   PREFERENCES: 'finance_preferences',
   COMMUNITY_POSTS: 'finance_community_posts',
   CACHE: 'finance_cache',
+  CATEGORY_BUDGETS: 'finance_category_budgets',
 };
 
 /**

@@ -205,7 +205,7 @@ export const calculateRetirementCorpus = (
 };
 
 /**
- * Calculate income tax (India - FY 2024-25)
+ * Calculate income tax (India - FY 2025-26)
  * @param {number} income - Annual gross income
  * @param {string} regime - 'old' or 'new'
  * @param {number} deductions - Section 80C, 80D deductions (only for old regime)
@@ -217,11 +217,11 @@ export const calculateIncomeTax = (income, regime = 'new', deductions = 0) => {
   const breakdown = [];
 
   if (regime === 'new') {
-    // New tax regime (FY 2024-25) - Standard deduction of ₹75,000
+    // New tax regime (FY 2025-26) - Standard deduction of ₹75,000
     const standardDeduction = 75000;
     taxableIncome = Math.max(0, income - standardDeduction);
 
-    // New regime slabs (FY 2024-25)
+    // New regime slabs (FY 2025-26)
     if (taxableIncome <= 300000) {
       tax = 0;
       breakdown.push({ slab: 'Up to ₹3,00,000', rate: '0%', amount: 0 });
@@ -326,7 +326,7 @@ export const calculateBudgetVariance = (budgeted, actual) => {
  * Calculate PPF (Public Provident Fund) maturity - India
  * @param {number} annualInvestment - Annual investment (max ₹1.5 lakh)
  * @param {number} years - Investment period (15 years minimum)
- * @param {number} interestRate - PPF interest rate (default 7.1% for FY 2024-25)
+ * @param {number} interestRate - PPF interest rate (default 7.1% for FY 2025-26)
  * @returns {Object} { totalInvested, maturityAmount, interest, yearlyBreakdown }
  */
 export const calculatePPF = (annualInvestment, years = 15, interestRate = 7.1) => {
@@ -391,7 +391,7 @@ export const calculateNPS = (monthlyContribution, currentAge, retirementAge = 60
  * Calculate Sukanya Samriddhi Yojana (SSY) maturity - India
  * @param {number} annualInvestment - Annual deposit (max ₹1.5 lakh)
  * @param {number} years - Years of deposit (max 15 years)
- * @param {number} interestRate - SSY interest rate (default 8.2% for FY 2024-25)
+ * @param {number} interestRate - SSY interest rate (default 8.2% for FY 2025-26)
  * @returns {Object} { totalInvested, maturityAmount, interest }
  */
 export const calculateSSY = (annualInvestment, years = 15, interestRate = 8.2) => {

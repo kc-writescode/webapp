@@ -1,6 +1,6 @@
 /**
  * CategoryPieChart Component
- * Pie chart showing expense breakdown by category
+ * Pie chart showing expense/income breakdown by category
  */
 
 import { useMemo } from 'react';
@@ -8,7 +8,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import { getCategoryById } from '@data/categories';
 import { formatCurrency } from '@utils/formatters';
 
-const COLORS = [
+const EXPENSE_COLORS = [
   '#3b82f6', // blue
   '#8b5cf6', // purple
   '#ec4899', // pink
@@ -21,7 +21,22 @@ const COLORS = [
   '#14b8a6', // teal
 ];
 
-const CategoryPieChart = ({ expenses }) => {
+const INCOME_COLORS = [
+  '#10b981', // green
+  '#22c55e', // light green
+  '#14b8a6', // teal
+  '#06b6d4', // cyan
+  '#0ea5e9', // sky blue
+  '#3b82f6', // blue
+  '#6366f1', // indigo
+  '#8b5cf6', // purple
+  '#a855f7', // violet
+  '#d946ef', // fuchsia
+];
+
+const CategoryPieChart = ({ expenses, type = 'expense' }) => {
+  const COLORS = type === 'income' ? INCOME_COLORS : EXPENSE_COLORS;
+
   // Group expenses by category
   const categoryData = useMemo(() => {
     const grouped = expenses.reduce((acc, expense) => {
@@ -36,7 +51,7 @@ const CategoryPieChart = ({ expenses }) => {
     // Convert to array and sort by amount
     return Object.entries(grouped)
       .map(([category, amount]) => {
-        const categoryInfo = getCategoryById(category, 'expense');
+        const categoryInfo = getCategoryById(category, type);
         return {
           name: categoryInfo?.name || category,
           value: amount,
@@ -44,7 +59,7 @@ const CategoryPieChart = ({ expenses }) => {
         };
       })
       .sort((a, b) => b.value - a.value);
-  }, [expenses]);
+  }, [expenses, type]);
 
   const totalAmount = useMemo(() => {
     return categoryData.reduce((sum, item) => sum + item.value, 0);
@@ -53,8 +68,8 @@ const CategoryPieChart = ({ expenses }) => {
   if (categoryData.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">📊</div>
-        <p className="text-slate-400">No expense data to display</p>
+        <div className="text-6xl mb-4">{type === 'income' ? '💰' : '📊'}</div>
+        <p className="text-slate-400">No {type} data to display</p>
       </div>
     );
   }

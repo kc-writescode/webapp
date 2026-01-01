@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import Input from '@components/common/Input';
 import Button from '@components/common/Button';
 import { Banknote, Calendar, Tag, CreditCard, Save, X } from 'lucide-react';
-import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from '@data/categories';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '@data/categories';
 import { validateAmount, validateRequired } from '@utils/validators';
 
 const ExpenseForm = ({ onSubmit, onCancel, initialData = null, loading = false }) => {
@@ -57,9 +57,12 @@ const ExpenseForm = ({ onSubmit, onCancel, initialData = null, loading = false }
       newErrors.amount = amountValidation.error;
     }
 
-    const descriptionValidation = validateRequired(formData.description, 'Description');
-    if (!descriptionValidation.isValid) {
-      newErrors.description = descriptionValidation.error;
+    // Description is only required for 'other' category
+    if (formData.category === 'other') {
+      const descriptionValidation = validateRequired(formData.description, 'Description');
+      if (!descriptionValidation.isValid) {
+        newErrors.description = descriptionValidation.error;
+      }
     }
 
     setErrors(newErrors);
@@ -110,7 +113,7 @@ const ExpenseForm = ({ onSubmit, onCancel, initialData = null, loading = false }
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, type: 'expense' }))}
+              onClick={() => setFormData(prev => ({ ...prev, type: 'expense', category: 'food' }))}
               className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
                 formData.type === 'expense'
                   ? 'bg-red-500/20 border-2 border-red-500 text-red-400'
@@ -121,7 +124,7 @@ const ExpenseForm = ({ onSubmit, onCancel, initialData = null, loading = false }
             </button>
             <button
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, type: 'income' }))}
+              onClick={() => setFormData(prev => ({ ...prev, type: 'income', category: 'salary' }))}
               className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
                 formData.type === 'income'
                   ? 'bg-green-500/20 border-2 border-green-500 text-green-400'
@@ -172,7 +175,7 @@ const ExpenseForm = ({ onSubmit, onCancel, initialData = null, loading = false }
               onChange={handleChange}
               className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-11 pr-4 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/50 transition-all duration-200"
             >
-              {EXPENSE_CATEGORIES.map((cat) => (
+              {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
@@ -203,19 +206,21 @@ const ExpenseForm = ({ onSubmit, onCancel, initialData = null, loading = false }
           </div>
         </div>
 
-        {/* Description */}
-        <div className="md:col-span-2">
-          <Input
-            label="Description"
-            type="text"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="What did you spend on?"
-            error={errors.description}
-            required
-          />
-        </div>
+        {/* Description - Only shown for 'other' category */}
+        {formData.category === 'other' && (
+          <div className="md:col-span-2">
+            <Input
+              label="Description"
+              type="text"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Please describe this transaction"
+              error={errors.description}
+              required
+            />
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}

@@ -14,6 +14,7 @@ import Input from '@components/common/Input';
 import ExpenseForm from '@components/expenses/ExpenseForm';
 import CategoryPieChart from '@components/expenses/CategoryPieChart';
 import ExpenseCard from '@components/expenses/ExpenseCard';
+import BudgetLimits from '@components/budget/BudgetLimits';
 import {
   TrendingUp,
   TrendingDown,
@@ -30,9 +31,12 @@ import {
   ArrowDownRight,
   Calendar,
   BarChart3,
+  Download,
+  Settings,
 } from 'lucide-react';
 import { formatCurrency, formatBudgetMonth, getCurrentMonth } from '@utils/formatters';
 import { EXPENSE_CATEGORIES } from '@data/categories';
+import { exportTransactionsToCSV } from '@utils/exportData';
 
 const DashboardOverview = () => {
   const { user } = useAuth();
@@ -60,6 +64,8 @@ const DashboardOverview = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const currentMonth = getCurrentMonth();
   const netBalance = totalIncome - totalExpenses;
@@ -70,7 +76,7 @@ const DashboardOverview = () => {
 
     if (searchTerm) {
       filtered = filtered.filter((t) =>
-        t.description.toLowerCase().includes(searchTerm.toLowerCase())
+        t.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -80,6 +86,17 @@ const DashboardOverview = () => {
 
     if (categoryFilter !== 'all') {
       filtered = filtered.filter((t) => t.category === categoryFilter);
+    }
+
+    // Date range filter
+    if (fromDate) {
+      const fromTimestamp = new Date(fromDate).getTime();
+      filtered = filtered.filter((t) => t.date >= fromTimestamp);
+    }
+
+    if (toDate) {
+      const toTimestamp = new Date(toDate).setHours(23, 59, 59, 999);
+      filtered = filtered.filter((t) => t.date <= toTimestamp);
     }
 
     filtered.sort((a, b) => {
@@ -96,7 +113,7 @@ const DashboardOverview = () => {
     });
 
     return filtered;
-  }, [currentMonthTransactions, searchTerm, typeFilter, categoryFilter, sortBy]);
+  }, [currentMonthTransactions, searchTerm, typeFilter, categoryFilter, sortBy, fromDate, toDate]);
 
   // Calculate insights
   const insights = useMemo(() => {
@@ -280,8 +297,21 @@ const DashboardOverview = () => {
           </Card>
         </div>
 
-        {/* Quick Add Button */}
-        <div className="flex justify-end mb-6">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 mb-6">
+          <Button
+            variant="outline"
+            icon={Download}
+            onClick={() => {
+              const result = exportTransactionsToCSV(currentMonthTransactions, formatBudgetMonth(currentMonth));
+              if (!result.success) {
+                alert(result.error || 'No transactions to export');
+              }
+            }}
+            disabled={currentMonthTransactions.length === 0}
+          >
+            Export CSV
+          </Button>
           <Button
             variant="primary"
             icon={Plus}
@@ -364,6 +394,21 @@ const DashboardOverview = () => {
               )}
             </Card>
 
+            {/* Income Breakdown */}
+            <Card title="Income Breakdown" icon={TrendingUp}>
+              {currentMonthIncome.length > 0 ? (
+                <CategoryPieChart expenses={currentMonthIncome} type="income" />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-2">💰</div>
+                  <p className="text-slate-400">No income yet</p>
+                </div>
+              )}
+            </Card>
+
+            {/* Budget Limits by Category */}
+            <BudgetLimits />
+
             {/* Recent Transactions */}
             <Card title="Recent Transactions" icon={Calendar} className="lg:col-span-2">
               {currentMonthTransactions.length === 0 ? (
@@ -400,7 +445,7 @@ const DashboardOverview = () => {
           <div className="space-y-4">
             {/* Filters */}
             <Card>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
                 <Input
                   type="text"
                   placeholder="Search transactions..."
@@ -451,10 +496,42 @@ const DashboardOverview = () => {
                   </select>
                 </div>
               </div>
+
+              {/* Date Range Filter */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-slate-700">
+                <Input
+                  type="date"
+                  label="From Date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  icon={Calendar}
+                />
+                <Input
+                  type="date"
+                  label="To Date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  icon={Calendar}
+                />
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFromDate('');
+                      setToDate('');
+                    }}
+                    disabled={!fromDate && !toDate}
+                    className="w-full"
+                  >
+                    Clear Dates
+                  </Button>
+                </div>
+              </div>
             </Card>
 
             {/* Results Summary */}
-            {(searchTerm || typeFilter !== 'all' || categoryFilter !== 'all') && (
+            {(searchTerm || typeFilter !== 'all' || categoryFilter !== 'all' || fromDate || toDate) && (
               <div className="flex items-center justify-between px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <p className="text-sm text-slate-300">
                   Showing <span className="font-bold text-blue-400">{filteredTransactions.length}</span> of{' '}
@@ -465,10 +542,12 @@ const DashboardOverview = () => {
                     setSearchTerm('');
                     setTypeFilter('all');
                     setCategoryFilter('all');
+                    setFromDate('');
+                    setToDate('');
                   }}
                   className="text-sm text-blue-400 hover:text-blue-300"
                 >
-                  Clear filters
+                  Clear all filters
                 </button>
               </div>
             )}

@@ -13,13 +13,17 @@ import Button from '@components/common/Button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const SIPCalculator = () => {
-  const [monthlyInvestment, setMonthlyInvestment] = useState(5000);
-  const [annualReturn, setAnnualReturn] = useState(12);
-  const [years, setYears] = useState(10);
+  const [monthlyInvestment, setMonthlyInvestment] = useState('5000');
+  const [annualReturn, setAnnualReturn] = useState('12');
+  const [years, setYears] = useState('10');
   const [results, setResults] = useState(null);
 
   const handleCalculate = () => {
-    const result = calculateSIP(monthlyInvestment, annualReturn, years);
+    const result = calculateSIP(
+      Number(monthlyInvestment) || 0,
+      Number(annualReturn) || 0,
+      Number(years) || 0
+    );
     setResults(result);
   };
 
@@ -50,9 +54,8 @@ const SIPCalculator = () => {
             <Input
               type="number"
               value={monthlyInvestment}
-              onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+              onChange={(e) => setMonthlyInvestment(e.target.value)}
               min="100"
-              step="100"
             />
             <div className="mt-2 flex items-center justify-between">
               <input
@@ -60,13 +63,13 @@ const SIPCalculator = () => {
                 min="500"
                 max="100000"
                 step="500"
-                value={monthlyInvestment}
-                onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+                value={Number(monthlyInvestment) || 500}
+                onChange={(e) => setMonthlyInvestment(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              {formatCurrency(monthlyInvestment)} per month
+              {formatCurrency(Number(monthlyInvestment) || 0)} per month
             </p>
           </div>
 
@@ -77,10 +80,9 @@ const SIPCalculator = () => {
             <Input
               type="number"
               value={annualReturn}
-              onChange={(e) => setAnnualReturn(Number(e.target.value))}
+              onChange={(e) => setAnnualReturn(e.target.value)}
               min="1"
               max="30"
-              step="0.5"
             />
             <div className="mt-2">
               <input
@@ -88,12 +90,12 @@ const SIPCalculator = () => {
                 min="1"
                 max="30"
                 step="0.5"
-                value={annualReturn}
-                onChange={(e) => setAnnualReturn(Number(e.target.value))}
+                value={Number(annualReturn) || 1}
+                onChange={(e) => setAnnualReturn(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">{annualReturn}% per annum</p>
+            <p className="text-xs text-slate-400 mt-1">{annualReturn || 0}% per annum</p>
           </div>
 
           <div>
@@ -103,10 +105,9 @@ const SIPCalculator = () => {
             <Input
               type="number"
               value={years}
-              onChange={(e) => setYears(Number(e.target.value))}
+              onChange={(e) => setYears(e.target.value)}
               min="1"
               max="40"
-              step="1"
             />
             <div className="mt-2">
               <input
@@ -114,12 +115,12 @@ const SIPCalculator = () => {
                 min="1"
                 max="40"
                 step="1"
-                value={years}
-                onChange={(e) => setYears(Number(e.target.value))}
+                value={Number(years) || 1}
+                onChange={(e) => setYears(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">{years} years</p>
+            <p className="text-xs text-slate-400 mt-1">{years || 0} years</p>
           </div>
 
           <Button variant="primary" onClick={handleCalculate} fullWidth size="lg">

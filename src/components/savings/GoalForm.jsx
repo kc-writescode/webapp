@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import Input from '@components/common/Input';
 import Button from '@components/common/Button';
-import { Target, Calendar, Tag, Save, X, DollarSign } from 'lucide-react';
+import { Target, Calendar, Tag, Save, X, IndianRupee } from 'lucide-react';
 import { GOAL_CATEGORIES } from '@utils/constants';
 import { validateAmount, validateRequired } from '@utils/validators';
 import { formatCurrency } from '@utils/formatters';
@@ -159,8 +159,8 @@ const GoalForm = ({ onSubmit, onCancel, initialData = null, loading = false }) =
           onChange={handleChange}
           placeholder="100000"
           min="1"
-          step="100"
-          icon={DollarSign}
+          step="1"
+          icon={IndianRupee}
           error={errors.targetAmount}
           disabled={loading}
         />
@@ -179,8 +179,8 @@ const GoalForm = ({ onSubmit, onCancel, initialData = null, loading = false }) =
             onChange={handleChange}
             placeholder="0"
             min="0"
-            step="100"
-            icon={DollarSign}
+            step="1"
+            icon={IndianRupee}
             error={errors.currentAmount}
             disabled={loading}
           />

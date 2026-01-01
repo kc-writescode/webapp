@@ -3,17 +3,30 @@
  * Main page for financial calculators
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Calculator, TrendingUp, Home, Receipt, Landmark, Shield } from 'lucide-react';
+import { useAuth } from '@contexts/AuthContext';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
-import SIPCalculator from './SIPCalculator';
-import EMICalculator from './EMICalculator';
-import TaxCalculator from './TaxCalculator';
-import PPFCalculator from './PPFCalculator';
-import NPSCalculator from './NPSCalculator';
-import RetirementCalculator from './RetirementCalculator';
+import AuthModal from '@components/auth/AuthModal';
+
+// Lazy load calculator components for better performance
+const SIPCalculator = lazy(() => import('./SIPCalculator'));
+const EMICalculator = lazy(() => import('./EMICalculator'));
+const TaxCalculator = lazy(() => import('./TaxCalculator'));
+const PPFCalculator = lazy(() => import('./PPFCalculator'));
+const NPSCalculator = lazy(() => import('./NPSCalculator'));
+const RetirementCalculator = lazy(() => import('./RetirementCalculator'));
+
+// Calculator loading skeleton
+const CalculatorLoader = () => (
+  <div className="animate-pulse space-y-4">
+    <div className="h-8 bg-slate-700 rounded w-1/3"></div>
+    <div className="h-64 bg-slate-700 rounded"></div>
+    <div className="h-32 bg-slate-700 rounded"></div>
+  </div>
+);
 
 const CALCULATORS = [
   {
@@ -35,7 +48,7 @@ const CALCULATORS = [
   {
     id: 'tax',
     name: 'Income Tax Calculator',
-    description: 'Calculate income tax liability (FY 2024-25)',
+    description: 'Calculate income tax liability (FY 2025-26)',
     icon: Receipt,
     color: 'from-red-500 to-pink-500',
     component: TaxCalculator,
@@ -67,7 +80,53 @@ const CALCULATORS = [
 ];
 
 const CalculatorHub = () => {
+  const { user } = useAuth();
   const [selectedCalculator, setSelectedCalculator] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      setSelectedCalculator(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Show auth modal if user is not logged in
+  if (!user) {
+    return (
+      <PageLayout>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔐</div>
+            <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
+            <p className="text-slate-400 mb-6">Please login to access the financial calculators</p>
+            <Button variant="primary" onClick={() => setShowAuthModal(true)}>
+              Login / Sign Up
+            </Button>
+          </div>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      </PageLayout>
+    );
+  }
+
+  // Handle selecting a calculator - push state for browser history
+  const handleSelectCalculator = useCallback((calc) => {
+    setSelectedCalculator(calc);
+    window.history.pushState({ calculator: calc.id }, '', `/calculators/${calc.id}`);
+  }, []);
+
+  // Handle back button click
+  const handleBack = useCallback(() => {
+    setSelectedCalculator(null);
+    window.history.pushState(null, '', '/calculators');
+  }, []);
 
   const SelectedComponent = selectedCalculator?.component;
 
@@ -78,7 +137,7 @@ const CalculatorHub = () => {
           {/* Back Button */}
           <Button
             variant="ghost"
-            onClick={() => setSelectedCalculator(null)}
+            onClick={handleBack}
             className="mb-6"
           >
             ← Back to Calculators
@@ -94,7 +153,9 @@ const CalculatorHub = () => {
             </p>
           </div>
 
-          <SelectedComponent />
+          <Suspense fallback={<CalculatorLoader />}>
+            <SelectedComponent />
+          </Suspense>
         </div>
       </PageLayout>
     );
@@ -120,7 +181,7 @@ const CalculatorHub = () => {
             return (
               <div
                 key={calc.id}
-                onClick={() => setSelectedCalculator(calc)}
+                onClick={() => handleSelectCalculator(calc)}
                 className="group cursor-pointer"
               >
                 <Card
@@ -166,7 +227,7 @@ const CalculatorHub = () => {
                 All calculators are tailored for the Indian market
               </h3>
               <p className="text-slate-400 text-sm">
-                Our calculators use current Indian tax slabs (FY 2024-25), interest rates, and
+                Our calculators use current Indian tax slabs (FY 2025-26), interest rates, and
                 regulations. Results are indicative and for educational purposes only. Please
                 consult a financial advisor for personalized advice.
               </p>

@@ -4,12 +4,13 @@
  */
 
 import { useState } from 'react';
-import { ArrowUp, ArrowDown, MessageSquare, Trash2, Clock } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Trash2, Clock } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
 import Modal from '@components/common/Modal';
+import AuthModal from '@components/auth/AuthModal';
 import CommentSection from './CommentSection';
 import { formatDistanceToNow } from '@utils/formatters';
 
@@ -18,6 +19,7 @@ const PostCard = ({ post }) => {
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const userVote = getUserVote(post.id);
   const score = post.upvotes - post.downvotes;
@@ -25,10 +27,18 @@ const PostCard = ({ post }) => {
 
   const handleVote = (voteType) => {
     if (!user) {
-      alert('Please login to vote');
+      setShowAuthModal(true);
       return;
     }
     voteOnPost(post.id, voteType);
+  };
+
+  const handleShowComments = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowComments(!showComments);
   };
 
   const handleDelete = () => {
@@ -55,23 +65,22 @@ const PostCard = ({ post }) => {
           <div className="flex flex-col items-center gap-1 pt-1">
             <button
               onClick={() => handleVote('upvote')}
-              disabled={!user}
               className={`p-1.5 rounded-lg transition-all ${
                 userVote === 'upvote'
-                  ? 'bg-orange-500/20 text-orange-400'
-                  : 'text-slate-400 hover:bg-slate-700 hover:text-orange-400'
-              } ${!user && 'opacity-50 cursor-not-allowed'}`}
-              title={!user ? 'Login to vote' : 'Upvote'}
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'text-slate-400 hover:bg-slate-700 hover:text-green-400'
+              }`}
+              title={!user ? 'Login to like' : 'Like'}
             >
-              <ArrowUp className="w-6 h-6" />
+              <ThumbsUp className="w-5 h-5" />
             </button>
 
             <span
               className={`text-sm font-bold ${
                 score > 0
-                  ? 'text-orange-400'
+                  ? 'text-green-400'
                   : score < 0
-                  ? 'text-blue-400'
+                  ? 'text-red-400'
                   : 'text-slate-400'
               }`}
             >
@@ -80,15 +89,14 @@ const PostCard = ({ post }) => {
 
             <button
               onClick={() => handleVote('downvote')}
-              disabled={!user}
               className={`p-1.5 rounded-lg transition-all ${
                 userVote === 'downvote'
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'text-slate-400 hover:bg-slate-700 hover:text-blue-400'
-              } ${!user && 'opacity-50 cursor-not-allowed'}`}
-              title={!user ? 'Login to vote' : 'Downvote'}
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'text-slate-400 hover:bg-slate-700 hover:text-red-400'
+              }`}
+              title={!user ? 'Login to dislike' : 'Dislike'}
             >
-              <ArrowDown className="w-6 h-6" />
+              <ThumbsDown className="w-5 h-5" />
             </button>
           </div>
 
@@ -145,7 +153,7 @@ const PostCard = ({ post }) => {
             {/* Post Footer */}
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setShowComments(!showComments)}
+                onClick={handleShowComments}
                 className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
@@ -153,10 +161,10 @@ const PostCard = ({ post }) => {
               </button>
 
               <span className="text-xs text-slate-500">
-                {post.upvotes} upvote{post.upvotes !== 1 && 's'}
+                {post.upvotes} like{post.upvotes !== 1 && 's'}
               </span>
               <span className="text-xs text-slate-500">
-                {post.downvotes} downvote{post.downvotes !== 1 && 's'}
+                {post.downvotes} dislike{post.downvotes !== 1 && 's'}
               </span>
             </div>
 
@@ -198,6 +206,12 @@ const PostCard = ({ post }) => {
           </div>
         </div>
       </Modal>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </>
   );
 };

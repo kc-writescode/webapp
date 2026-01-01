@@ -16,4 +16,28 @@ export default defineConfig({
       '@data': path.resolve(__dirname, './src/data'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Vendor chunks - split large dependencies
+          if (id.includes('node_modules')) {
+            if (id.includes('react-router') || id.includes('react-dom') || id.includes('/react/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('recharts') || id.includes('d3-')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            // Other vendor libs
+            return 'vendor';
+          }
+        },
+      },
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 550,
+  },
 })

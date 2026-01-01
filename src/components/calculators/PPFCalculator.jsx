@@ -13,13 +13,17 @@ import Button from '@components/common/Button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const PPFCalculator = () => {
-  const [annualInvestment, setAnnualInvestment] = useState(150000);
-  const [years, setYears] = useState(15);
-  const [interestRate, setInterestRate] = useState(7.1);
+  const [annualInvestment, setAnnualInvestment] = useState('150000');
+  const [years, setYears] = useState('15');
+  const [interestRate, setInterestRate] = useState('7.1');
   const [results, setResults] = useState(null);
 
   const handleCalculate = () => {
-    const result = calculatePPF(annualInvestment, years, interestRate);
+    const result = calculatePPF(
+      Number(annualInvestment) || 0,
+      Number(years) || 15,
+      Number(interestRate) || 7.1
+    );
     setResults(result);
   };
 
@@ -35,10 +39,14 @@ const PPFCalculator = () => {
             <Input
               type="number"
               value={annualInvestment}
-              onChange={(e) => setAnnualInvestment(Math.min(150000, Number(e.target.value)))}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || Number(val) <= 150000) {
+                  setAnnualInvestment(val);
+                }
+              }}
               min="500"
               max="150000"
-              step="1000"
             />
             <div className="mt-2">
               <input
@@ -46,13 +54,13 @@ const PPFCalculator = () => {
                 min="500"
                 max="150000"
                 step="1000"
-                value={annualInvestment}
-                onChange={(e) => setAnnualInvestment(Number(e.target.value))}
+                value={Number(annualInvestment) || 500}
+                onChange={(e) => setAnnualInvestment(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500"
               />
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              {formatCurrency(annualInvestment)} per year
+              {formatCurrency(Number(annualInvestment) || 0)} per year
             </p>
           </div>
 
@@ -63,10 +71,9 @@ const PPFCalculator = () => {
             <Input
               type="number"
               value={years}
-              onChange={(e) => setYears(Math.max(15, Number(e.target.value)))}
+              onChange={(e) => setYears(e.target.value)}
               min="15"
               max="30"
-              step="1"
             />
             <div className="mt-2">
               <input
@@ -74,27 +81,26 @@ const PPFCalculator = () => {
                 min="15"
                 max="30"
                 step="1"
-                value={years}
-                onChange={(e) => setYears(Number(e.target.value))}
+                value={Number(years) || 15}
+                onChange={(e) => setYears(e.target.value)}
                 className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1">{years} years</p>
+            <p className="text-xs text-slate-400 mt-1">{years || 0} years</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Interest Rate (Current: 7.1% for FY 2024-25)
+              Interest Rate (Current: 7.1% for FY 2025-26)
             </label>
             <Input
               type="number"
               value={interestRate}
-              onChange={(e) => setInterestRate(Number(e.target.value))}
+              onChange={(e) => setInterestRate(e.target.value)}
               min="1"
               max="12"
-              step="0.1"
             />
-            <p className="text-xs text-slate-400 mt-1">{interestRate}% per annum (compounded annually)</p>
+            <p className="text-xs text-slate-400 mt-1">{interestRate || 0}% per annum (compounded annually)</p>
           </div>
 
           <Button variant="primary" onClick={handleCalculate} fullWidth size="lg">

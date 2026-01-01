@@ -217,6 +217,39 @@ export const validatePhone = (phone) => {
 };
 
 /**
+ * Validate Indian phone number
+ * @param {string} phone - Phone number (with or without +91)
+ * @returns {Object} { isValid, error }
+ */
+export const validateIndianPhone = (phone) => {
+  if (!phone || phone.trim() === '') {
+    return { isValid: false, error: 'Mobile number is required' };
+  }
+
+  // Remove all non-digit characters except +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+
+  // Handle +91 prefix
+  if (cleaned.startsWith('+91')) {
+    cleaned = cleaned.substring(3);
+  } else if (cleaned.startsWith('91') && cleaned.length === 12) {
+    cleaned = cleaned.substring(2);
+  }
+
+  // Should be exactly 10 digits
+  if (cleaned.length !== 10) {
+    return { isValid: false, error: 'Mobile number must be 10 digits' };
+  }
+
+  // First digit should be 6-9 for Indian numbers
+  if (!/^[6-9]/.test(cleaned)) {
+    return { isValid: false, error: 'Invalid Indian mobile number' };
+  }
+
+  return { isValid: true, error: null };
+};
+
+/**
  * Validate description/text field
  * @param {string} text - Text to validate
  * @param {number} maxLength - Maximum length
@@ -436,6 +469,7 @@ export default {
   validateFutureDate,
   validatePercentage,
   validatePhone,
+  validateIndianPhone,
   validateDescription,
   validateCategory,
   validateGoalTarget,

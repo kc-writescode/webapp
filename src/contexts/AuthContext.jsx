@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Signup function
-  const signup = useCallback((username, email, password) => {
+  const signup = useCallback((username, email, password, phoneNumber = '') => {
     try {
       // Check if user already exists
       const existingUser = getItem(STORAGE_KEYS.USER);
@@ -94,6 +94,7 @@ export const AuthProvider = ({ children }) => {
         id: uuidv4(),
         username,
         email,
+        phoneNumber,
         password, // In production, NEVER store plain text passwords!
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3b82f6&color=fff`,
         createdAt: Date.now(),
