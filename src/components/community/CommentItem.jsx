@@ -4,22 +4,31 @@
  */
 
 import { useState } from 'react';
-import { ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Clock, Pencil, X, Save } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
+import { useToast } from '@contexts/ToastContext';
 import Button from '@components/common/Button';
 import { formatDistanceToNow } from '@utils/formatters';
 
 const CommentItem = ({ comment, postId, level = 0 }) => {
-  const { voteOnComment, addComment, getUserCommentVote } = useCommunity();
+  const { voteOnComment, addComment, updateComment, getUserCommentVote } = useCommunity();
   const { user } = useAuth();
+  const toast = useToast();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
 
   const userVote = getUserCommentVote(postId, comment.id);
   const score = comment.upvotes - comment.downvotes;
   const maxNestingLevel = 5; // Maximum depth for nested comments
+  const isAuthor = user && user.id === comment.userId;
+
+  // Check if comment is editable (within 24 hours)
+  const hoursSinceCreation = (Date.now() - comment.createdAt) / (1000 * 60 * 60);
+  const canEdit = isAuthor && hoursSinceCreation <= 24;
 
   const handleVote = (voteType) => {
     if (!user) {
@@ -54,6 +63,27 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
     }
 
     setIsSubmitting(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editContent.trim()) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+
+    const result = updateComment(postId, comment.id, editContent.trim());
+
+    if (result.success) {
+      toast.success('Comment updated!');
+      setIsEditing(false);
+    } else {
+      toast.error(result.error || 'Failed to update comment');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditContent(comment.content);
+    setIsEditing(false);
   };
 
   return (
@@ -102,25 +132,69 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
 
         {/* Comment Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <img
-              src={comment.avatar}
-              alt={comment.username}
-              className="w-6 h-6 rounded-full"
-            />
-            <span className="text-sm font-semibold text-white">
-              {comment.username}
-            </span>
-            <span className="text-xs text-slate-500">•</span>
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatDistanceToNow(comment.createdAt)}
-            </span>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <img
+                src={comment.avatar}
+                alt={comment.username}
+                className="w-6 h-6 rounded-full"
+              />
+              <span className="text-sm font-semibold text-white">
+                {comment.username}
+              </span>
+              <span className="text-xs text-slate-500">•</span>
+              <span className="text-xs text-slate-400 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {formatDistanceToNow(comment.createdAt)}
+              </span>
+              {comment.isEdited && (
+                <span className="text-xs text-slate-500">(edited)</span>
+              )}
+            </div>
+            {canEdit && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 text-slate-400 hover:text-blue-400 transition-colors"
+                title="Edit comment"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          <p className="text-sm text-slate-300 mb-2 whitespace-pre-wrap break-words">
-            {comment.content}
-          </p>
+          {isEditing ? (
+            <div className="mb-2">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={3}
+                className="w-full text-sm text-slate-300 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="Edit your comment..."
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={Save}
+                  onClick={handleSaveEdit}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={X}
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-300 mb-2 whitespace-pre-wrap break-words">
+              {comment.content}
+            </p>
+          )}
 
           <div className="flex items-center gap-3">
             {level < maxNestingLevel && (

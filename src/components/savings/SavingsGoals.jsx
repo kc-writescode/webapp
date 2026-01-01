@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react';
 import { Plus, Target, TrendingUp, Award, Search } from 'lucide-react';
 import { useBudget } from '@contexts/BudgetContext';
 import { useToast } from '@contexts/ToastContext';
+import { useAchievements } from '@contexts/AchievementContext';
 import { formatCurrency } from '@utils/formatters';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
@@ -23,8 +24,10 @@ const SavingsGoals = () => {
     updateGoal,
     deleteGoal,
     addContribution,
+    loading,
   } = useBudget();
   const toast = useToast();
+  const { trackGoal, trackContribution, trackGoalCompleted } = useAchievements();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,6 +88,7 @@ const SavingsGoals = () => {
     if (result.success) {
       setShowCreateModal(false);
       toast.success('Savings goal created successfully!');
+      trackGoal(); // Track for achievements
     } else {
       toast.error(result.error || 'Failed to create goal');
     }
@@ -109,9 +113,21 @@ const SavingsGoals = () => {
   };
 
   const handleAddContribution = (goalId, amount) => {
+    // Check if goal will be completed after this contribution
+    const goal = savingsGoals.find((g) => g.id === goalId);
+    const wasIncomplete = goal && goal.currentAmount < goal.targetAmount;
+    const willBeComplete = goal && (goal.currentAmount + amount) >= goal.targetAmount;
+
     const result = addContribution(goalId, amount);
     if (result.success) {
       toast.success(`Added ${formatCurrency(amount)} to your goal!`);
+      trackContribution(); // Track for achievements
+
+      // Check if goal was just completed
+      if (wasIncomplete && willBeComplete) {
+        trackGoalCompleted();
+        toast.success('Congratulations! You completed a savings goal! 🎉');
+      }
     } else {
       toast.error(result.error || 'Failed to add contribution');
     }

@@ -14,6 +14,9 @@ const STORAGE_KEYS = {
   COMMUNITY_POSTS: 'finance_community_posts',
   CACHE: 'finance_cache',
   CATEGORY_BUDGETS: 'finance_category_budgets',
+  ACHIEVEMENTS: 'finance_achievements',
+  ACHIEVEMENT_STATS: 'finance_achievement_stats',
+  RECURRING_TRANSACTIONS: 'finance_recurring_transactions',
 };
 
 /**

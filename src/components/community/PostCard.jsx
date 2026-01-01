@@ -4,9 +4,11 @@
  */
 
 import { useState } from 'react';
-import { ThumbsUp, ThumbsDown, MessageSquare, Trash2, Clock } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Trash2, Clock, Star, Pencil, X, Save, Bookmark } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
+import { useAchievements } from '@contexts/AchievementContext';
+import { useToast } from '@contexts/ToastContext';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
 import Modal from '@components/common/Modal';
@@ -15,22 +17,61 @@ import CommentSection from './CommentSection';
 import { formatDistanceToNow } from '@utils/formatters';
 
 const PostCard = ({ post }) => {
-  const { voteOnPost, deletePost, getUserVote } = useCommunity();
-  const { user } = useAuth();
+  const { voteOnPost, deletePost, updatePost, getUserVote } = useCommunity();
+  const { user, toggleBookmark, isPostBookmarked } = useAuth();
+  const { trackUpvoteReceived } = useAchievements();
+  const toast = useToast();
+  const isBookmarked = isPostBookmarked(post.id);
   const [showComments, setShowComments] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(post.title);
+  const [editContent, setEditContent] = useState(post.content);
 
   const userVote = getUserVote(post.id);
   const score = post.upvotes - post.downvotes;
   const isAuthor = user && user.id === post.userId;
+
+  // Check if post is editable (within 24 hours)
+  const hoursSinceCreation = (Date.now() - post.createdAt) / (1000 * 60 * 60);
+  const canEdit = isAuthor && hoursSinceCreation <= 24;
+
+  const handleSaveEdit = () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      toast.error('Title and content are required');
+      return;
+    }
+
+    const result = updatePost(post.id, {
+      title: editTitle.trim(),
+      content: editContent.trim(),
+    });
+
+    if (result.success) {
+      toast.success('Post updated successfully!');
+      setIsEditing(false);
+    } else {
+      toast.error(result.error || 'Failed to update post');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditTitle(post.title);
+    setEditContent(post.content);
+    setIsEditing(false);
+  };
 
   const handleVote = (voteType) => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-    voteOnPost(post.id, voteType);
+    const result = voteOnPost(post.id, voteType);
+    // Track upvote received for post author (if upvoting someone else's post)
+    if (result?.success && voteType === 'upvote' && !isAuthor) {
+      trackUpvoteReceived();
+    }
   };
 
   const handleShowComments = () => {
@@ -39,6 +80,17 @@ const PostCard = ({ post }) => {
       return;
     }
     setShowComments(!showComments);
+  };
+
+  const handleBookmark = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    const result = toggleBookmark(post.id);
+    if (result.success) {
+      toast.success(result.isBookmarked ? 'Post saved!' : 'Post unsaved');
+    }
   };
 
   const handleDelete = () => {
@@ -115,6 +167,12 @@ const PostCard = ({ post }) => {
                     <span className="text-sm font-semibold text-white">
                       {post.username}
                     </span>
+                    {post.karma > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-yellow-500/20 rounded text-xs text-yellow-400" title="Karma points">
+                        <Star className="w-3 h-3" />
+                        {post.karma}
+                      </span>
+                    )}
                     <span className="text-xs text-slate-500">•</span>
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -128,27 +186,83 @@ const PostCard = ({ post }) => {
               </div>
 
               {isAuthor && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={Trash2}
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-400 hover:text-red-300"
-                >
-                  Delete
-                </Button>
+                <div className="flex items-center gap-2">
+                  {canEdit && !isEditing && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={Pencil}
+                      onClick={() => setIsEditing(true)}
+                      className="text-blue-400 hover:text-blue-300"
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={Trash2}
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    Delete
+                  </Button>
+                </div>
               )}
             </div>
 
             {/* Post Title */}
-            <h3 className="text-xl font-bold text-white mb-2 break-words">
-              {post.title}
-            </h3>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full text-xl font-bold text-white mb-2 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Post title"
+              />
+            ) : (
+              <h3 className="text-xl font-bold text-white mb-2 break-words">
+                {post.title}
+                {post.isEdited && (
+                  <span className="text-xs font-normal text-slate-500 ml-2">(edited)</span>
+                )}
+              </h3>
+            )}
 
             {/* Post Content */}
-            <p className="text-slate-300 mb-4 whitespace-pre-wrap break-words">
-              {post.content}
-            </p>
+            {isEditing ? (
+              <div className="mb-4">
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={4}
+                  className="w-full text-slate-300 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Post content"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={Save}
+                    onClick={handleSaveEdit}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={X}
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-slate-300 mb-4 whitespace-pre-wrap break-words">
+                {post.content}
+              </p>
+            )}
 
             {/* Post Footer */}
             <div className="flex items-center gap-4">
@@ -158,6 +272,19 @@ const PostCard = ({ post }) => {
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>{totalComments} {totalComments === 1 ? 'comment' : 'comments'}</span>
+              </button>
+
+              <button
+                onClick={handleBookmark}
+                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                  isBookmarked
+                    ? 'text-yellow-400'
+                    : 'text-slate-400 hover:text-yellow-400'
+                }`}
+                title={isBookmarked ? 'Remove from saved' : 'Save post'}
+              >
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                <span>{isBookmarked ? 'Saved' : 'Save'}</span>
               </button>
 
               <span className="text-xs text-slate-500">

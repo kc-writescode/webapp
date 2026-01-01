@@ -51,6 +51,51 @@ export const BudgetProvider = ({ children }) => {
     }
   };
 
+  // Helper to calculate next recurrence date
+  const getNextRecurrenceDate = (currentDate, recurrence) => {
+    const date = new Date(currentDate);
+    switch (recurrence) {
+      case 'weekly':
+        date.setDate(date.getDate() + 7);
+        break;
+      case 'biweekly':
+        date.setDate(date.getDate() + 14);
+        break;
+      case 'monthly':
+        date.setMonth(date.getMonth() + 1);
+        break;
+      case 'yearly':
+        date.setFullYear(date.getFullYear() + 1);
+        break;
+      default:
+        return null;
+    }
+    return date.getTime();
+  };
+
+  // Save recurring transaction template
+  const saveRecurringTemplate = useCallback((transactionData) => {
+    if (transactionData.recurrence && transactionData.recurrence !== 'none') {
+      try {
+        const recurringTemplates = getItem(STORAGE_KEYS.RECURRING_TRANSACTIONS, []);
+        const nextDueDate = getNextRecurrenceDate(transactionData.date, transactionData.recurrence);
+
+        const template = {
+          id: uuidv4(),
+          userId: user.id,
+          ...transactionData,
+          nextDueDate,
+          createdAt: Date.now(),
+        };
+
+        const updatedTemplates = [...recurringTemplates, template];
+        setItem(STORAGE_KEYS.RECURRING_TRANSACTIONS, updatedTemplates);
+      } catch (error) {
+        console.error('Error saving recurring template:', error);
+      }
+    }
+  }, [user]);
+
   // EXPENSE METHODS
   const addExpense = useCallback((expenseData) => {
     if (!user) return { success: false, error: 'No user logged in' };
@@ -68,12 +113,15 @@ export const BudgetProvider = ({ children }) => {
       setExpenses(updatedExpenses);
       setItem(STORAGE_KEYS.EXPENSES, updatedExpenses);
 
+      // Save recurring template if applicable
+      saveRecurringTemplate(expenseData);
+
       return { success: true, expense: newExpense };
     } catch (error) {
       console.error('Error adding expense:', error);
       return { success: false, error: 'Failed to add expense' };
     }
-  }, [user, expenses]);
+  }, [user, expenses, saveRecurringTemplate]);
 
   const updateExpense = useCallback((id, updates) => {
     if (!user) return { success: false, error: 'No user logged in' };
@@ -186,12 +234,15 @@ export const BudgetProvider = ({ children }) => {
       setIncome(updatedIncome);
       setItem(STORAGE_KEYS.INCOME, updatedIncome);
 
+      // Save recurring template if applicable
+      saveRecurringTemplate({ ...incomeData, type: 'income' });
+
       return { success: true, income: newIncome };
     } catch (error) {
       console.error('Error adding income:', error);
       return { success: false, error: 'Failed to add income' };
     }
-  }, [user, income]);
+  }, [user, income, saveRecurringTemplate]);
 
   const updateIncome = useCallback((id, updates) => {
     if (!user) return { success: false, error: 'No user logged in' };

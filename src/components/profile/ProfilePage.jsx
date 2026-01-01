@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Mail,
@@ -21,6 +22,13 @@ import {
   Receipt,
   TrendingUp,
   MessageSquare,
+  Bookmark,
+  Star,
+  Clock,
+  ChevronRight,
+  Award,
+  PiggyBank,
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '@contexts/AuthContext';
 import { useBudget } from '@contexts/BudgetContext';
@@ -31,14 +39,22 @@ import Card from '@components/common/Card';
 import Button from '@components/common/Button';
 import Input from '@components/common/Input';
 import Modal from '@components/common/Modal';
-import { formatCurrency, formatDate } from '@utils/formatters';
+import AchievementBadges from './AchievementBadges';
+import { formatCurrency, formatDate, formatDistanceToNow } from '@utils/formatters';
 import { exportData, importData } from '@utils/localStorage';
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const { user, updateProfile, logout } = useAuth();
   const { savingsGoals, expenses, income, currentMonthTransactions } = useBudget();
   const { posts } = useCommunity();
   const toast = useToast();
+
+  // Get bookmarked posts
+  const bookmarkedPosts = user?.bookmarkedPosts || [];
+  const savedPostsData = useMemo(() => {
+    return posts.filter((p) => bookmarkedPosts.includes(p.id)).slice(0, 3);
+  }, [posts, bookmarkedPosts]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -69,6 +85,87 @@ const ProfilePage = () => {
       totalSavings,
       userPosts,
     };
+  }, [expenses, income, savingsGoals, posts, user]);
+
+  // Build activity timeline
+  const activityTimeline = useMemo(() => {
+    const activities = [];
+
+    // Add recent expenses
+    expenses.slice(-10).forEach((expense) => {
+      activities.push({
+        id: `expense-${expense.id}`,
+        type: 'expense',
+        icon: Wallet,
+        iconColor: 'text-red-400',
+        iconBg: 'bg-red-500/20',
+        title: `Spent ${formatCurrency(expense.amount)}`,
+        subtitle: expense.category,
+        timestamp: expense.createdAt || expense.date,
+      });
+    });
+
+    // Add recent income
+    income.slice(-10).forEach((inc) => {
+      activities.push({
+        id: `income-${inc.id}`,
+        type: 'income',
+        icon: TrendingUp,
+        iconColor: 'text-green-400',
+        iconBg: 'bg-green-500/20',
+        title: `Earned ${formatCurrency(inc.amount)}`,
+        subtitle: inc.category,
+        timestamp: inc.createdAt || inc.date,
+      });
+    });
+
+    // Add savings goals
+    savingsGoals.forEach((goal) => {
+      activities.push({
+        id: `goal-${goal.id}`,
+        type: 'goal',
+        icon: Target,
+        iconColor: 'text-blue-400',
+        iconBg: 'bg-blue-500/20',
+        title: `Created goal: ${goal.name}`,
+        subtitle: `Target: ${formatCurrency(goal.targetAmount)}`,
+        timestamp: goal.createdAt,
+      });
+
+      // Add contributions
+      (goal.contributions || []).forEach((contrib, idx) => {
+        activities.push({
+          id: `contrib-${goal.id}-${idx}`,
+          type: 'contribution',
+          icon: PiggyBank,
+          iconColor: 'text-emerald-400',
+          iconBg: 'bg-emerald-500/20',
+          title: `Saved ${formatCurrency(contrib.amount)}`,
+          subtitle: `to ${goal.name}`,
+          timestamp: contrib.date,
+        });
+      });
+    });
+
+    // Add user posts
+    posts.filter((p) => p.userId === user?.id).forEach((post) => {
+      activities.push({
+        id: `post-${post.id}`,
+        type: 'post',
+        icon: MessageSquare,
+        iconColor: 'text-purple-400',
+        iconBg: 'bg-purple-500/20',
+        title: post.title,
+        subtitle: `${post.upvotes} likes • ${post.comments.length} comments`,
+        timestamp: post.createdAt,
+      });
+    });
+
+    // Sort by timestamp (newest first) and take top 8
+    return activities
+      .filter((a) => a.timestamp)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 8);
   }, [expenses, income, savingsGoals, posts, user]);
 
   const handleInputChange = (e) => {
@@ -291,7 +388,141 @@ const ProfilePage = () => {
                   {stats.userPosts}
                 </span>
               </div>
+
+              {/* Karma display */}
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm text-slate-300">Karma Points</span>
+                </div>
+                <span className="text-lg font-bold text-yellow-400">
+                  {user.karma || 0}
+                </span>
+              </div>
             </div>
+          </Card>
+
+          {/* Saved Posts Quick Access */}
+          <Card className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                  <Bookmark className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Saved Posts</h3>
+                  <p className="text-sm text-slate-400">{bookmarkedPosts.length} posts saved</p>
+                </div>
+              </div>
+              {bookmarkedPosts.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/community')}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  View All
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+            </div>
+
+            {savedPostsData.length === 0 ? (
+              <div className="text-center py-8 bg-slate-800/30 rounded-lg">
+                <Bookmark className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                <p className="text-slate-400 text-sm">No saved posts yet</p>
+                <p className="text-slate-500 text-xs mt-1">
+                  Save posts from the community to access them quickly here
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {savedPostsData.map((post) => (
+                  <div
+                    key={post.id}
+                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                    onClick={() => navigate('/community')}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={post.avatar}
+                        alt={post.username}
+                        className="w-8 h-8 rounded-full flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {post.title}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          by {post.username} • {formatDistanceToNow(post.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span>{post.upvotes} likes</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* Activity Timeline */}
+          <Card className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+                  <p className="text-sm text-slate-400">Your latest actions</p>
+                </div>
+              </div>
+            </div>
+
+            {activityTimeline.length === 0 ? (
+              <div className="text-center py-8 bg-slate-800/30 rounded-lg">
+                <Clock className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                <p className="text-slate-400 text-sm">No activity yet</p>
+                <p className="text-slate-500 text-xs mt-1">
+                  Start tracking expenses, creating goals, or posting to see your activity here
+                </p>
+              </div>
+            ) : (
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-700" />
+
+                <div className="space-y-4">
+                  {activityTimeline.map((activity, index) => {
+                    const IconComponent = activity.icon;
+                    return (
+                      <div key={activity.id} className="relative flex items-start gap-4 pl-2">
+                        {/* Icon */}
+                        <div className={`relative z-10 p-2 rounded-lg ${activity.iconBg}`}>
+                          <IconComponent className={`w-4 h-4 ${activity.iconColor}`} />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 pb-4">
+                          <p className="text-sm font-medium text-white truncate">
+                            {activity.title}
+                          </p>
+                          <p className="text-xs text-slate-400 capitalize">
+                            {activity.subtitle}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {formatDistanceToNow(activity.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Data Management */}
@@ -340,6 +571,11 @@ const ProfilePage = () => {
               </Button>
             </div>
           </Card>
+        </div>
+
+        {/* Achievement Badges Section */}
+        <div className="mt-8">
+          <AchievementBadges />
         </div>
       </div>
 

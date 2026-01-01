@@ -222,6 +222,100 @@ export const CommunityProvider = ({ children }) => {
     });
   };
 
+  // UPDATE POST (edit within 24 hours)
+  const updatePost = useCallback((postId, updates) => {
+    if (!user) return { success: false, error: 'Must be logged in' };
+
+    try {
+      const post = posts.find((p) => p.id === postId);
+      if (!post) return { success: false, error: 'Post not found' };
+      if (post.userId !== user.id) {
+        return { success: false, error: 'Can only edit your own posts' };
+      }
+
+      // Check if within 24 hours of creation
+      const hoursSinceCreation = (Date.now() - post.createdAt) / (1000 * 60 * 60);
+      if (hoursSinceCreation > 24) {
+        return { success: false, error: 'Posts can only be edited within 24 hours of creation' };
+      }
+
+      const updatedPosts = posts.map((p) => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            title: updates.title || p.title,
+            content: updates.content || p.content,
+            isEdited: true,
+            updatedAt: Date.now(),
+          };
+        }
+        return p;
+      });
+
+      setPosts(updatedPosts);
+      setItem(STORAGE_KEYS.COMMUNITY_POSTS, updatedPosts);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating post:', error);
+      return { success: false, error: 'Failed to update post' };
+    }
+  }, [user, posts]);
+
+  // UPDATE COMMENT (edit within 24 hours)
+  const updateComment = useCallback((postId, commentId, newContent) => {
+    if (!user) return { success: false, error: 'Must be logged in' };
+
+    try {
+      const updateCommentRecursive = (comments) => {
+        return comments.map((comment) => {
+          if (comment.id === commentId) {
+            if (comment.userId !== user.id) {
+              return comment; // Can't edit others' comments
+            }
+
+            const hoursSinceCreation = (Date.now() - comment.createdAt) / (1000 * 60 * 60);
+            if (hoursSinceCreation > 24) {
+              return comment; // Too old to edit
+            }
+
+            return {
+              ...comment,
+              content: newContent,
+              isEdited: true,
+              updatedAt: Date.now(),
+            };
+          }
+
+          if (comment.replies && comment.replies.length > 0) {
+            return { ...comment, replies: updateCommentRecursive(comment.replies) };
+          }
+
+          return comment;
+        });
+      };
+
+      const updatedPosts = posts.map((post) => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: updateCommentRecursive(post.comments),
+            updatedAt: Date.now(),
+          };
+        }
+        return post;
+      });
+
+      setPosts(updatedPosts);
+      setItem(STORAGE_KEYS.COMMUNITY_POSTS, updatedPosts);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      return { success: false, error: 'Failed to update comment' };
+    }
+  }, [user, posts]);
+
   // DELETE POST
   const deletePost = useCallback((postId) => {
     if (!user) return { success: false, error: 'Must be logged in' };
@@ -279,8 +373,10 @@ export const CommunityProvider = ({ children }) => {
     posts,
     loading,
     createPost,
+    updatePost,
     voteOnPost,
     addComment,
+    updateComment,
     voteOnComment,
     deletePost,
     getUserVote,

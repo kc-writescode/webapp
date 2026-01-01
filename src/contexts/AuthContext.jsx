@@ -67,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         createdAt: Date.now(),
         preferences: { ...DEFAULT_PREFERENCES },
         karma: 0,
+        bookmarkedPosts: [],
       };
 
       setItem(STORAGE_KEYS.USER, newUser);
@@ -100,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         createdAt: Date.now(),
         preferences: { ...DEFAULT_PREFERENCES },
         karma: 0,
+        bookmarkedPosts: [],
       };
 
       setItem(STORAGE_KEYS.USER, newUser);
@@ -196,6 +198,40 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  // Toggle bookmark on a post
+  const toggleBookmark = useCallback((postId) => {
+    try {
+      if (!user) return { success: false, error: 'Must be logged in' };
+
+      const bookmarkedPosts = user.bookmarkedPosts || [];
+      const isBookmarked = bookmarkedPosts.includes(postId);
+
+      const updatedBookmarks = isBookmarked
+        ? bookmarkedPosts.filter((id) => id !== postId)
+        : [...bookmarkedPosts, postId];
+
+      const updatedUser = {
+        ...user,
+        bookmarkedPosts: updatedBookmarks,
+        updatedAt: Date.now(),
+      };
+
+      setItem(STORAGE_KEYS.USER, updatedUser);
+      setUser(updatedUser);
+
+      return { success: true, isBookmarked: !isBookmarked };
+    } catch (error) {
+      console.error('Toggle bookmark error:', error);
+      return { success: false, error: 'Failed to update bookmark' };
+    }
+  }, [user]);
+
+  // Check if a post is bookmarked
+  const isPostBookmarked = useCallback((postId) => {
+    if (!user) return false;
+    return (user.bookmarkedPosts || []).includes(postId);
+  }, [user]);
+
   const value = {
     user,
     isAuthenticated,
@@ -206,6 +242,8 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     updatePreferences,
     updateKarma,
+    toggleBookmark,
+    isPostBookmarked,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '@contexts/AuthContext';
 import { useBudget } from '@contexts/BudgetContext';
 import { useToast } from '@contexts/ToastContext';
+import { useAchievements } from '@contexts/AchievementContext';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
@@ -16,6 +17,7 @@ import ExpenseForm from '@components/expenses/ExpenseForm';
 import CategoryPieChart from '@components/expenses/CategoryPieChart';
 import ExpenseCard from '@components/expenses/ExpenseCard';
 import BudgetLimits from '@components/budget/BudgetLimits';
+import SpendingTrends from './SpendingTrends';
 import {
   TrendingUp,
   TrendingDown,
@@ -57,6 +59,7 @@ const DashboardOverview = () => {
     deleteIncome,
   } = useBudget();
   const toast = useToast();
+  const { trackTransaction, stats } = useAchievements();
 
   // State
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -167,6 +170,7 @@ const DashboardOverview = () => {
     if (result.success) {
       setShowExpenseModal(false);
       toast.success(`${isIncome ? 'Income' : 'Expense'} added successfully!`);
+      trackTransaction(); // Track for achievements and streak
     } else {
       toast.error(result.error || 'Failed to add transaction');
     }
@@ -235,6 +239,7 @@ const DashboardOverview = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: PieChart },
     { id: 'transactions', label: 'Transactions', icon: Receipt },
+    { id: 'trends', label: 'Trends', icon: TrendingUp },
     { id: 'insights', label: 'Insights', icon: Lightbulb },
   ];
 
@@ -243,12 +248,25 @@ const DashboardOverview = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-            Welcome, {user?.username}! 👋
-          </h1>
-          <p className="text-slate-400">
-            Your financial overview for {formatBudgetMonth(currentMonth)}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Welcome, {user?.username}! 👋
+              </h1>
+              <p className="text-slate-400">
+                Your financial overview for {formatBudgetMonth(currentMonth)}
+              </p>
+            </div>
+            {stats.currentStreak > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <p className="text-sm font-bold text-orange-400">{stats.currentStreak} day streak</p>
+                  <p className="text-xs text-slate-400">Keep it up!</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -595,6 +613,10 @@ const DashboardOverview = () => {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'trends' && (
+          <SpendingTrends />
         )}
 
         {activeTab === 'insights' && (

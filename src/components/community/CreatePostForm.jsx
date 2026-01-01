@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useToast } from '@contexts/ToastContext';
+import { useAchievements } from '@contexts/AchievementContext';
 import Input from '@components/common/Input';
 import Button from '@components/common/Button';
 import { Save, X, MessageSquare } from 'lucide-react';
@@ -13,6 +14,7 @@ import { Save, X, MessageSquare } from 'lucide-react';
 const CreatePostForm = ({ onClose }) => {
   const { createPost } = useCommunity();
   const toast = useToast();
+  const { trackPost } = useAchievements();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -71,6 +73,7 @@ const CreatePostForm = ({ onClose }) => {
 
     if (result.success) {
       toast.success('Post created successfully!');
+      trackPost(); // Track post for achievements
       onClose();
     } else {
       toast.error(result.error || 'Failed to create post');

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { MessageSquare, Plus, TrendingUp, Clock, Award } from 'lucide-react';
+import { MessageSquare, Plus, TrendingUp, Clock, Award, Bookmark } from 'lucide-react';
 import { useCommunity } from '@contexts/CommunityContext';
 import { useAuth } from '@contexts/AuthContext';
 import PageLayout from '@components/layout/PageLayout';
@@ -14,6 +14,7 @@ import Modal from '@components/common/Modal';
 import AuthModal from '@components/auth/AuthModal';
 import PostCard from './PostCard';
 import CreatePostForm from './CreatePostForm';
+import Leaderboard from './Leaderboard';
 
 const CommunityPage = () => {
   const { posts, loading } = useCommunity();
@@ -22,6 +23,10 @@ const CommunityPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [sortBy, setSortBy] = useState('new'); // 'new', 'hot', 'top'
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+
+  // Get user's bookmarked posts
+  const bookmarkedPosts = user?.bookmarkedPosts || [];
 
   const categories = [
     { id: 'all', name: 'All Topics', icon: MessageSquare },
@@ -31,10 +36,15 @@ const CommunityPage = () => {
     { id: 'questions', name: 'Questions', icon: MessageSquare },
   ];
 
-  // Filter posts by category
-  const filteredPosts = selectedCategory === 'all'
+  // Filter posts by category and saved status
+  let filteredPosts = selectedCategory === 'all'
     ? posts
     : posts.filter((post) => post.category === selectedCategory);
+
+  // Apply saved filter if active
+  if (showSavedOnly && user) {
+    filteredPosts = filteredPosts.filter((post) => bookmarkedPosts.includes(post.id));
+  }
 
   // Sort posts
   const sortedPosts = [...filteredPosts].sort((a, b) => {
@@ -84,31 +94,42 @@ const CommunityPage = () => {
             {/* Controls */}
             <Card>
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    variant={sortBy === 'hot' ? 'primary' : 'outline'}
+                    variant={sortBy === 'hot' && !showSavedOnly ? 'primary' : 'outline'}
                     size="sm"
                     icon={TrendingUp}
-                    onClick={() => setSortBy('hot')}
+                    onClick={() => { setSortBy('hot'); setShowSavedOnly(false); }}
                   >
                     Hot
                   </Button>
                   <Button
-                    variant={sortBy === 'new' ? 'primary' : 'outline'}
+                    variant={sortBy === 'new' && !showSavedOnly ? 'primary' : 'outline'}
                     size="sm"
                     icon={Clock}
-                    onClick={() => setSortBy('new')}
+                    onClick={() => { setSortBy('new'); setShowSavedOnly(false); }}
                   >
                     New
                   </Button>
                   <Button
-                    variant={sortBy === 'top' ? 'primary' : 'outline'}
+                    variant={sortBy === 'top' && !showSavedOnly ? 'primary' : 'outline'}
                     size="sm"
                     icon={Award}
-                    onClick={() => setSortBy('top')}
+                    onClick={() => { setSortBy('top'); setShowSavedOnly(false); }}
                   >
                     Top
                   </Button>
+                  {user && (
+                    <Button
+                      variant={showSavedOnly ? 'primary' : 'outline'}
+                      size="sm"
+                      icon={Bookmark}
+                      onClick={() => setShowSavedOnly(!showSavedOnly)}
+                      className={showSavedOnly ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/30' : ''}
+                    >
+                      Saved ({bookmarkedPosts.length})
+                    </Button>
+                  )}
                 </div>
 
                 <Button
@@ -135,21 +156,41 @@ const CommunityPage = () => {
             ) : sortedPosts.length === 0 ? (
               <Card>
                 <div className="text-center py-16">
-                  <MessageSquare className="w-16 h-16 mx-auto text-slate-600 mb-4" />
-                  <h3 className="text-xl font-semibold text-slate-300 mb-2">
-                    No posts yet
-                  </h3>
-                  <p className="text-slate-400 mb-4">
-                    Be the first to start a discussion!
-                  </p>
-                  <Button
-                    variant="primary"
-                    icon={Plus}
-                    onClick={handleCreatePost}
-                    disabled={!user}
-                  >
-                    Create First Post
-                  </Button>
+                  {showSavedOnly ? (
+                    <>
+                      <Bookmark className="w-16 h-16 mx-auto text-slate-600 mb-4" />
+                      <h3 className="text-xl font-semibold text-slate-300 mb-2">
+                        No saved posts
+                      </h3>
+                      <p className="text-slate-400 mb-4">
+                        Posts you save will appear here for easy access
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowSavedOnly(false)}
+                      >
+                        Browse All Posts
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="w-16 h-16 mx-auto text-slate-600 mb-4" />
+                      <h3 className="text-xl font-semibold text-slate-300 mb-2">
+                        No posts yet
+                      </h3>
+                      <p className="text-slate-400 mb-4">
+                        Be the first to start a discussion!
+                      </p>
+                      <Button
+                        variant="primary"
+                        icon={Plus}
+                        onClick={handleCreatePost}
+                        disabled={!user}
+                      >
+                        Create First Post
+                      </Button>
+                    </>
+                  )}
                 </div>
               </Card>
             ) : (
@@ -194,6 +235,9 @@ const CommunityPage = () => {
                 })}
               </div>
             </Card>
+
+            {/* Leaderboard */}
+            <Leaderboard />
 
             {/* Community Stats */}
             <Card title="Community Stats">
