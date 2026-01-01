@@ -6,6 +6,7 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '@contexts/AuthContext';
 import { useBudget } from '@contexts/BudgetContext';
+import { useToast } from '@contexts/ToastContext';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
@@ -54,8 +55,8 @@ const DashboardOverview = () => {
     updateIncome,
     deleteExpense,
     deleteIncome,
-    loading,
   } = useBudget();
+  const toast = useToast();
 
   // State
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -159,27 +160,39 @@ const DashboardOverview = () => {
   }, [currentMonthExpenses, currentMonthTransactions, totalExpenses, totalIncome]);
 
   const handleAddExpense = (transactionData) => {
-    const result = transactionData.type === 'income'
+    const isIncome = transactionData.type === 'income';
+    const result = isIncome
       ? addIncome(transactionData)
       : addExpense(transactionData);
     if (result.success) {
       setShowExpenseModal(false);
+      toast.success(`${isIncome ? 'Income' : 'Expense'} added successfully!`);
+    } else {
+      toast.error(result.error || 'Failed to add transaction');
     }
   };
 
   const handleEditExpense = (id, updates) => {
-    if (updates.type === 'income') {
-      updateIncome(id, updates);
+    const isIncome = updates.type === 'income';
+    const result = isIncome
+      ? updateIncome(id, updates)
+      : updateExpense(id, updates);
+    if (result.success) {
+      toast.success('Transaction updated successfully!');
     } else {
-      updateExpense(id, updates);
+      toast.error(result.error || 'Failed to update transaction');
     }
   };
 
   const handleDeleteExpense = (id, type) => {
-    if (type === 'income') {
-      deleteIncome(id);
+    const isIncome = type === 'income';
+    const result = isIncome
+      ? deleteIncome(id)
+      : deleteExpense(id);
+    if (result.success) {
+      toast.success('Transaction deleted successfully!');
     } else {
-      deleteExpense(id);
+      toast.error(result.error || 'Failed to delete transaction');
     }
   };
 

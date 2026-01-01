@@ -6,6 +6,7 @@
 import { useState, useMemo } from 'react';
 import { Plus, Target, TrendingUp, Award, Search } from 'lucide-react';
 import { useBudget } from '@contexts/BudgetContext';
+import { useToast } from '@contexts/ToastContext';
 import { formatCurrency } from '@utils/formatters';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
@@ -22,8 +23,8 @@ const SavingsGoals = () => {
     updateGoal,
     deleteGoal,
     addContribution,
-    loading,
   } = useBudget();
+  const toast = useToast();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,19 +84,37 @@ const SavingsGoals = () => {
     const result = createGoal(goalData);
     if (result.success) {
       setShowCreateModal(false);
+      toast.success('Savings goal created successfully!');
+    } else {
+      toast.error(result.error || 'Failed to create goal');
     }
   };
 
   const handleUpdateGoal = (id, updates) => {
-    updateGoal(id, updates);
+    const result = updateGoal(id, updates);
+    if (result.success) {
+      toast.success('Goal updated successfully!');
+    } else {
+      toast.error(result.error || 'Failed to update goal');
+    }
   };
 
   const handleDeleteGoal = (id) => {
-    deleteGoal(id);
+    const result = deleteGoal(id);
+    if (result.success) {
+      toast.success('Goal deleted successfully!');
+    } else {
+      toast.error(result.error || 'Failed to delete goal');
+    }
   };
 
   const handleAddContribution = (goalId, amount) => {
-    addContribution(goalId, amount);
+    const result = addContribution(goalId, amount);
+    if (result.success) {
+      toast.success(`Added ${formatCurrency(amount)} to your goal!`);
+    } else {
+      toast.error(result.error || 'Failed to add contribution');
+    }
   };
 
   if (loading) {

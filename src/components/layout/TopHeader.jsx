@@ -5,16 +5,18 @@
 
 import { useState } from 'react';
 import { useAuth } from '@contexts/AuthContext';
-import { LogOut, LogIn, Menu, X } from 'lucide-react';
+import { LogOut, LogIn, Menu, X, WifiOff, Wifi } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AuthModal from '@components/auth/AuthModal';
 import Button from '@components/common/Button';
+import useOnlineStatus from '@hooks/useOnlineStatus';
 
 const TopHeader = ({ onLogoClick, isScrolled }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const { isOnline, wasOffline } = useOnlineStatus();
 
   const handleLogout = () => {
     logout();
@@ -31,8 +33,26 @@ const TopHeader = ({ onLogoClick, isScrolled }) => {
 
   return (
     <>
+      {/* Offline Banner */}
+      {!isOnline && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-red-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2">
+          <WifiOff className="w-4 h-4" />
+          You're offline. Some features may not work.
+        </div>
+      )}
+
+      {/* Back Online Banner */}
+      {wasOffline && isOnline && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-green-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 animate-slide-up">
+          <Wifi className="w-4 h-4" />
+          You're back online!
+        </div>
+      )}
+
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
+          !isOnline || wasOffline ? 'top-10' : 'top-0'
+        } ${
           isScrolled
             ? 'bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 shadow-xl'
             : 'bg-slate-900/50 backdrop-blur-md'

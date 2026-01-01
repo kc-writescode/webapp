@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@contexts/AuthContext';
 import { useBudget } from '@contexts/BudgetContext';
 import { useCommunity } from '@contexts/CommunityContext';
+import { useToast } from '@contexts/ToastContext';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
 import Button from '@components/common/Button';
@@ -37,6 +38,7 @@ const ProfilePage = () => {
   const { user, updateProfile, logout } = useAuth();
   const { savingsGoals, expenses, income, currentMonthTransactions } = useBudget();
   const { posts } = useCommunity();
+  const toast = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -77,6 +79,7 @@ const ProfilePage = () => {
   const handleSaveProfile = () => {
     if (updateProfile) {
       updateProfile(formData);
+      toast.success('Profile updated successfully!');
     }
     setIsEditing(false);
   };
@@ -91,18 +94,23 @@ const ProfilePage = () => {
   };
 
   const handleExportData = () => {
-    const data = exportData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `finlit_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      const data = exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `finlit_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Data exported successfully!');
+    } catch {
+      toast.error('Failed to export data');
+    }
   };
 
   const handleImportData = (e) => {
@@ -114,13 +122,13 @@ const ProfilePage = () => {
       try {
         const data = JSON.parse(event.target.result);
         if (importData(data)) {
-          alert('Data imported successfully! Please refresh the page.');
-          window.location.reload();
+          toast.success('Data imported successfully! Refreshing...');
+          setTimeout(() => window.location.reload(), 1500);
         } else {
-          alert('Failed to import data');
+          toast.error('Failed to import data');
         }
       } catch {
-        alert('Invalid backup file');
+        toast.error('Invalid backup file');
       }
     };
     reader.readAsText(file);

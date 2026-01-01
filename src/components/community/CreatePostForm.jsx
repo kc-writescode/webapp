@@ -5,12 +5,14 @@
 
 import { useState } from 'react';
 import { useCommunity } from '@contexts/CommunityContext';
+import { useToast } from '@contexts/ToastContext';
 import Input from '@components/common/Input';
 import Button from '@components/common/Button';
 import { Save, X, MessageSquare } from 'lucide-react';
 
 const CreatePostForm = ({ onClose }) => {
   const { createPost } = useCommunity();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -68,8 +70,10 @@ const CreatePostForm = ({ onClose }) => {
     });
 
     if (result.success) {
+      toast.success('Post created successfully!');
       onClose();
     } else {
+      toast.error(result.error || 'Failed to create post');
       setErrors({ submit: result.error });
     }
   };
