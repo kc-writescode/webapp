@@ -19,6 +19,10 @@ import {
   BookOpen,
   Download,
   FileText,
+  FileSpreadsheet,
+  CreditCard,
+  PiggyBank,
+  Shield,
 } from 'lucide-react';
 import TopHeader from '@components/layout/TopHeader';
 import Button from '@components/common/Button';
@@ -110,6 +114,51 @@ const HomePage = () => {
       description: 'Understand why filing ITR is important and the benefits it brings beyond compliance.',
       color: 'from-purple-500 to-pink-500',
       file: '/files/The-Benefits-of-Filing-Income-Tax-Returns-in-India-A-Simple-Guide-for-Everyone.pdf',
+    },
+  ];
+
+  const excelTemplates = [
+    {
+      title: 'Complete Budget Planner',
+      description: 'Monthly budget with 50/30/20 rule analysis and expense categorization.',
+      color: 'from-indigo-500 to-blue-500',
+      icon: FileSpreadsheet,
+      file: '/files/Free Resources/Complete Budget Planner.xlsx',
+    },
+    {
+      title: 'Salary & Tax Calculator',
+      description: 'CTC to in-hand calculator with FY 2025-26 tax slabs.',
+      color: 'from-green-500 to-teal-500',
+      icon: Receipt,
+      file: '/files/Free Resources/Salary Tax Calculator.xlsx',
+    },
+    {
+      title: 'Debt Freedom Tracker',
+      description: 'Master debt with snowball & avalanche strategies.',
+      color: 'from-orange-500 to-red-500',
+      icon: CreditCard,
+      file: '/files/Free Resources/Debt Freedom Tracker.xlsx',
+    },
+    {
+      title: 'Investment Portfolio Manager',
+      description: 'Track mutual funds, stocks, FDs with CAGR calculations.',
+      color: 'from-purple-500 to-indigo-500',
+      icon: TrendingUp,
+      file: '/files/Free Resources/Investment Portfolio Manager.xlsx',
+    },
+    {
+      title: 'Emergency Fund Planner',
+      description: 'Calculate your ideal emergency fund with savings timeline.',
+      color: 'from-yellow-500 to-orange-500',
+      icon: PiggyBank,
+      file: '/files/Free Resources/Emergency Fund Planner.xlsx',
+    },
+    {
+      title: 'Insurance Needs Analyzer',
+      description: 'Comprehensive insurance audit with coverage calculators.',
+      color: 'from-teal-500 to-cyan-500',
+      icon: Shield,
+      file: '/files/Free Resources/Insurance Needs Analyzer.xlsx',
     },
   ];
 
@@ -252,41 +301,97 @@ const HomePage = () => {
               Free Resources
             </h2>
             <p className="text-xl text-slate-400">
-              Download our free eBooks to boost your financial literacy
+              Download free eBooks and Excel spreadsheets to boost your financial literacy
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {freeEbooks.map((ebook, index) => (
-              <a
-                key={index}
-                href={ebook.file}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`p-4 bg-gradient-to-br ${ebook.color} rounded-xl flex-shrink-0`}>
-                    <FileText className="w-8 h-8 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
-                      {ebook.title}
-                    </h3>
-                    <p className="text-sm text-slate-300 mb-2">{ebook.subtitle}</p>
-                    <p className="text-sm text-slate-400 mb-4">{ebook.description}</p>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
-                      <Download className="w-4 h-4" />
-                      <span>Download Free PDF</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          {/* Free eBooks */}
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <FileText className="w-5 h-5 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Free eBooks</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {freeEbooks.map((ebook, index) => (
+                <a
+                  key={index}
+                  href={ebook.file}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`p-4 bg-gradient-to-br ${ebook.color} rounded-xl flex-shrink-0`}>
+                      <FileText className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                        {ebook.title}
+                      </h3>
+                      <p className="text-sm text-slate-300 mb-2">{ebook.subtitle}</p>
+                      <p className="text-sm text-slate-400 mb-4">{ebook.description}</p>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
+                        <Download className="w-4 h-4" />
+                        <span>Download Free PDF</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </a>
-            ))}
+                </a>
+              ))}
+            </div>
           </div>
 
-          <div className="text-center mt-12">
+          {/* Excel Spreadsheets */}
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <FileSpreadsheet className="w-5 h-5 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Excel Spreadsheets</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {excelTemplates.map((template, index) => {
+                const Icon = template.icon;
+                return (
+                  <a
+                    key={index}
+                    href={template.file}
+                    download
+                    className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-5 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 bg-gradient-to-br ${template.color} rounded-xl flex-shrink-0`}>
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-lg font-bold text-white mb-1 group-hover:text-cyan-400 transition-colors">
+                          {template.title}
+                        </h4>
+                        <p className="text-sm text-slate-400 mb-3">{template.description}</p>
+                        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
+                          <Download className="w-4 h-4" />
+                          <span>Download Excel</span>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/resources')}
+              className="mb-4"
+            >
+              View All Resources
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
             <p className="text-slate-400 text-sm">
               All resources are 100% free • No signup required • Instant download
             </p>
