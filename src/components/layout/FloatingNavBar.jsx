@@ -3,11 +3,10 @@
  * Mobile-first floating bottom navigation bar
  */
 
-import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Newspaper,
+  BookOpen,
   Calculator,
   Target,
   Users,
@@ -21,7 +20,7 @@ const FloatingNavBar = () => {
   const navigation = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'savings', label: 'Goals', icon: Target, path: '/savings' },
-    { id: 'news', label: 'News', icon: Newspaper, path: '/news' },
+    { id: 'resources', label: 'Resources', icon: BookOpen, path: '/resources' },
     { id: 'calculators', label: 'Tools', icon: Calculator, path: '/calculators' },
     { id: 'community', label: 'Community', icon: Users, path: '/community' },
   ];
@@ -36,7 +35,7 @@ const FloatingNavBar = () => {
     if (path === '/' || path === '/dashboard') return 'dashboard';
     if (path.startsWith('/expenses')) return 'expenses';
     if (path.startsWith('/savings')) return 'savings';
-    if (path.startsWith('/news')) return 'news';
+    if (path.startsWith('/resources')) return 'resources';
     if (path.startsWith('/calculators')) return 'calculators';
     if (path.startsWith('/community')) return 'community';
     return 'dashboard';

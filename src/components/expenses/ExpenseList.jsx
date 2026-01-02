@@ -51,12 +51,7 @@ const ExpenseList = ({ expenses, onEdit, onDelete, loading = false }) => {
     });
 
     return filtered;
-  }, [expenses, searchTerm, categoryFilter, sortBy]);
-
-  // Calculate total for filtered expenses
-  const filteredTotal = useMemo(() => {
-    return filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  }, [filteredExpenses]);
+  }, [expenses, searchTerm, categoryFilter, typeFilter, sortBy]);
 
   if (loading) {
     return (

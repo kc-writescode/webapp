@@ -25,6 +25,9 @@ const CommunityPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
+  // Capture current time for sorting calculations - use lazy state init
+  const [currentTime] = useState(() => Date.now());
+
   // Get user's bookmarked posts
   const bookmarkedPosts = user?.bookmarkedPosts || [];
 
@@ -54,8 +57,8 @@ const CommunityPage = () => {
       // Hot = recent posts with high engagement
       const aScore = (a.upvotes - a.downvotes) + a.comments.length * 2;
       const bScore = (b.upvotes - b.downvotes) + b.comments.length * 2;
-      const aAge = Date.now() - a.createdAt;
-      const bAge = Date.now() - b.createdAt;
+      const aAge = currentTime - a.createdAt;
+      const bAge = currentTime - b.createdAt;
       const aHotScore = aScore / (aAge / 3600000 + 2); // Age in hours
       const bHotScore = bScore / (bAge / 3600000 + 2);
       return bHotScore - aHotScore;
@@ -255,7 +258,7 @@ const CommunityPage = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Active Today</span>
                   <span className="text-lg font-bold text-green-400">
-                    {posts.filter((p) => Date.now() - p.createdAt < 86400000).length}
+                    {posts.filter((p) => currentTime - p.createdAt < 86400000).length}
                   </span>
                 </div>
               </div>

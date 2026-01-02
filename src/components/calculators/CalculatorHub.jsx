@@ -84,14 +84,26 @@ const CalculatorHub = () => {
   const [selectedCalculator, setSelectedCalculator] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Handle selecting a calculator - push state for browser history
+  const handleSelectCalculator = useCallback((calc) => {
+    setSelectedCalculator(calc);
+    globalThis.history.pushState({ calculator: calc.id }, '', `/calculators/${calc.id}`);
+  }, []);
+
+  // Handle back button click
+  const handleBack = useCallback(() => {
+    setSelectedCalculator(null);
+    globalThis.history.pushState(null, '', '/calculators');
+  }, []);
+
   // Handle browser back button
   useEffect(() => {
     const handlePopState = () => {
       setSelectedCalculator(null);
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    globalThis.addEventListener('popstate', handlePopState);
+    return () => globalThis.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Show auth modal if user is not logged in
@@ -115,18 +127,6 @@ const CalculatorHub = () => {
       </PageLayout>
     );
   }
-
-  // Handle selecting a calculator - push state for browser history
-  const handleSelectCalculator = useCallback((calc) => {
-    setSelectedCalculator(calc);
-    window.history.pushState({ calculator: calc.id }, '', `/calculators/${calc.id}`);
-  }, []);
-
-  // Handle back button click
-  const handleBack = useCallback(() => {
-    setSelectedCalculator(null);
-    window.history.pushState(null, '', '/calculators');
-  }, []);
 
   const SelectedComponent = selectedCalculator?.component;
 

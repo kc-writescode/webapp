@@ -19,6 +19,9 @@ const GoalCard = ({ goal, onEdit, onDelete, onAddContribution }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showContributionModal, setShowContributionModal] = useState(false);
 
+  // Capture mount time for calculations - use lazy state init
+  const [mountTime] = useState(() => Date.now());
+
   const category = GOAL_CATEGORIES.find((c) => c.id === goal.category) || GOAL_CATEGORIES[GOAL_CATEGORIES.length - 1];
 
   // Computed values
@@ -27,8 +30,7 @@ const GoalCard = ({ goal, onEdit, onDelete, onAddContribution }) => {
   const isCompleted = goal.currentAmount >= goal.targetAmount;
 
   // Calculate days left and overdue status
-  const now = Date.now();
-  const daysLeft = goal.deadline ? Math.ceil((goal.deadline - now) / (1000 * 60 * 60 * 24)) : null;
+  const daysLeft = goal.deadline ? Math.ceil((goal.deadline - mountTime) / (1000 * 60 * 60 * 24)) : null;
   const isOverdue = daysLeft !== null && daysLeft < 0 && !isCompleted;
   const monthsLeft = daysLeft ? Math.max(Math.ceil(daysLeft / 30), 1) : null;
   const monthlyTarget = monthsLeft && remaining > 0 ? remaining / monthsLeft : 0;

@@ -29,12 +29,15 @@ const PostCard = ({ post }) => {
   const [editTitle, setEditTitle] = useState(post.title);
   const [editContent, setEditContent] = useState(post.content);
 
+  // Capture mount time for edit check - use lazy state init to avoid calling Date.now on every render
+  const [mountTime] = useState(() => Date.now());
+
   const userVote = getUserVote(post.id);
   const score = post.upvotes - post.downvotes;
   const isAuthor = user && user.id === post.userId;
 
   // Check if post is editable (within 24 hours)
-  const hoursSinceCreation = (Date.now() - post.createdAt) / (1000 * 60 * 60);
+  const hoursSinceCreation = (mountTime - post.createdAt) / (1000 * 60 * 60);
   const canEdit = isAuthor && hoursSinceCreation <= 24;
 
   const handleSaveEdit = () => {

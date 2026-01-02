@@ -11,7 +11,7 @@ import { formatCurrency } from '@utils/formatters';
 import { EXPENSE_CATEGORIES } from '@data/categories';
 
 const SpendingTrends = () => {
-  const { expenses, income } = useBudget();
+  const { expenses } = useBudget();
 
   // Calculate trends
   const trends = useMemo(() => {

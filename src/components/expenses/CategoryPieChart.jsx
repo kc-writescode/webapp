@@ -65,6 +65,24 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
     return categoryData.reduce((sum, item) => sum + item.value, 0);
   }, [categoryData]);
 
+  const renderTooltip = useMemo(() => {
+    const TooltipContent = ({ active, payload }) => {
+      if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        const percentage = ((data.value / totalAmount) * 100).toFixed(1);
+        return (
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-xl">
+            <p className="text-white font-semibold mb-1">{data.name}</p>
+            <p className="text-blue-400 font-bold">{formatCurrency(data.value)}</p>
+            <p className="text-slate-400 text-sm">{percentage}% of total</p>
+          </div>
+        );
+      }
+      return null;
+    };
+    return TooltipContent;
+  }, [totalAmount]);
+
   if (categoryData.length === 0) {
     return (
       <div className="text-center py-12">
@@ -73,21 +91,6 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const percentage = ((data.value / totalAmount) * 100).toFixed(1);
-      return (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-xl">
-          <p className="text-white font-semibold mb-1">{data.name}</p>
-          <p className="text-blue-400 font-bold">{formatCurrency(data.value)}</p>
-          <p className="text-slate-400 text-sm">{percentage}% of total</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div>
@@ -107,7 +110,7 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={renderTooltip} />
           <Legend
             verticalAlign="bottom"
             height={36}

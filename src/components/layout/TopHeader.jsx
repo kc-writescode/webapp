@@ -11,7 +11,7 @@ import AuthModal from '@components/auth/AuthModal';
 import Button from '@components/common/Button';
 import useOnlineStatus from '@hooks/useOnlineStatus';
 
-const TopHeader = ({ onLogoClick, isScrolled }) => {
+const TopHeader = ({ isScrolled }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -26,10 +26,14 @@ const TopHeader = ({ onLogoClick, isScrolled }) => {
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', auth: true },
     { name: 'Goals', path: '/savings', auth: true },
-    { name: 'News', path: '/news', auth: false },
+    { name: 'Resources', path: '/resources', auth: false },
     { name: 'Tools', path: '/calculators', auth: false },
     { name: 'Community', path: '/community', auth: false },
   ];
+
+  const handleNavClick = (link) => {
+    navigate(link.path);
+  };
 
   return (
     <>
@@ -76,8 +80,8 @@ const TopHeader = ({ onLogoClick, isScrolled }) => {
                 if (link.auth && !user) return null;
                 return (
                   <button
-                    key={link.path}
-                    onClick={() => navigate(link.path)}
+                    key={link.name}
+                    onClick={() => handleNavClick(link)}
                     className="text-slate-300 hover:text-white transition-colors text-sm font-medium"
                   >
                     {link.name}
@@ -87,26 +91,27 @@ const TopHeader = ({ onLogoClick, isScrolled }) => {
             </div>
 
             {/* User Section */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {user ? (
                 <>
+                  {/* Profile button - visible on all screen sizes */}
                   <button
                     onClick={() => navigate('/profile')}
-                    className="hidden sm:flex items-center gap-2 bg-slate-800/50 px-3 py-2 rounded-full border border-slate-700 hover:border-blue-500/50 hover:bg-slate-700/50 transition-all"
+                    className="flex items-center gap-2 bg-slate-800/50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-slate-700 hover:border-blue-500/50 hover:bg-slate-700/50 transition-all"
                     title="View Profile"
                   >
                     <img
                       src={user.avatar}
                       alt={user.username}
-                      className="w-6 h-6 rounded-full"
+                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
                     />
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs sm:text-sm font-medium text-white hidden xs:inline sm:inline">
                       {user.username}
                     </span>
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                    className="hidden sm:block p-2 hover:bg-slate-800 rounded-lg transition-colors"
                     title="Logout"
                   >
                     <LogOut className="w-5 h-5 text-gray-400 hover:text-red-400 transition-colors" />
@@ -146,9 +151,9 @@ const TopHeader = ({ onLogoClick, isScrolled }) => {
                   if (link.auth && !user) return null;
                   return (
                     <button
-                      key={link.path}
+                      key={link.name}
                       onClick={() => {
-                        navigate(link.path);
+                        handleNavClick(link);
                         setShowMobileMenu(false);
                       }}
                       className="text-slate-300 hover:text-white transition-colors text-sm font-medium text-left py-2"
@@ -157,6 +162,28 @@ const TopHeader = ({ onLogoClick, isScrolled }) => {
                     </button>
                   );
                 })}
+                {user && (
+                  <>
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setShowMobileMenu(false);
+                      }}
+                      className="text-slate-300 hover:text-white transition-colors text-sm font-medium text-left py-2"
+                    >
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setShowMobileMenu(false);
+                      }}
+                      className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium text-left py-2"
+                    >
+                      Logout
+                    </button>
+                  </>
+                )}
                 {!user && (
                   <Button
                     variant="primary"

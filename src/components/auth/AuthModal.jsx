@@ -89,7 +89,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       } else {
         setErrorMessage(result.error || 'Authentication failed');
       }
-    } catch (error) {
+    } catch {
       setErrorMessage('An unexpected error occurred');
     } finally {
       setLoading(false);

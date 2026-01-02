@@ -21,6 +21,7 @@ const CommunityPage = lazy(() => import('@components/community/CommunityPage'));
 const SavingsGoals = lazy(() => import('@components/savings/SavingsGoals'));
 const NewsPage = lazy(() => import('@components/news/NewsPage'));
 const ProfilePage = lazy(() => import('@components/profile/ProfilePage'));
+const FreeResources = lazy(() => import('@components/resources/FreeResources'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -68,6 +69,11 @@ const ProfileHub = () => (
     <ProfilePage />
   </Suspense>
 );
+const ResourcesPage = () => (
+  <Suspense fallback={<PageLoader />}>
+    <FreeResources />
+  </Suspense>
+);
 
 function App() {
   return (
@@ -91,6 +97,7 @@ function App() {
                       <Route path="/savings" element={<SavingsPage />} />
                       <Route path="/news" element={<NewsHub />} />
                       <Route path="/profile" element={<ProfileHub />} />
+                      <Route path="/resources" element={<ResourcesPage />} />
                       {/* Redirect old expenses route to dashboard */}
                       <Route path="/expenses" element={<Navigate to="/dashboard" replace />} />
 

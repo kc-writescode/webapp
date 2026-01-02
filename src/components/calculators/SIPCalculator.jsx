@@ -12,6 +12,21 @@ import Input from '@components/common/Input';
 import Button from '@components/common/Button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-xl">
+        <p className="text-white font-semibold mb-1">Year {data.year}</p>
+        <p className="text-blue-400 text-sm">Invested: {formatCurrency(data.invested)}</p>
+        <p className="text-green-400 text-sm">Value: {formatCurrency(data.value)}</p>
+        <p className="text-emerald-400 text-sm">Returns: {formatCurrency(data.returns)}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const SIPCalculator = () => {
   const [monthlyInvestment, setMonthlyInvestment] = useState('5000');
   const [annualReturn, setAnnualReturn] = useState('12');
@@ -25,21 +40,6 @@ const SIPCalculator = () => {
       Number(years) || 0
     );
     setResults(result);
-  };
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-xl">
-          <p className="text-white font-semibold mb-1">Year {data.year}</p>
-          <p className="text-blue-400 text-sm">Invested: {formatCurrency(data.invested)}</p>
-          <p className="text-green-400 text-sm">Value: {formatCurrency(data.value)}</p>
-          <p className="text-emerald-400 text-sm">Returns: {formatCurrency(data.returns)}</p>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (

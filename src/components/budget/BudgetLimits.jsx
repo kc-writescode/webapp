@@ -3,11 +3,10 @@
  * Set and track budget limits per expense category
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Target, Edit2, Save, X, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useBudget } from '@contexts/BudgetContext';
 import Card from '@components/common/Card';
-import Button from '@components/common/Button';
 import Input from '@components/common/Input';
 import { formatCurrency } from '@utils/formatters';
 import { EXPENSE_CATEGORIES } from '@data/categories';
@@ -33,7 +32,7 @@ const BudgetLimits = () => {
   }, [currentMonthExpenses]);
 
   // Get budget status for a category
-  const getBudgetStatus = (categoryId) => {
+  const getBudgetStatus = useCallback((categoryId) => {
     const budget = categoryBudgets[categoryId];
     const spent = categorySpending[categoryId] || 0;
 
@@ -49,7 +48,7 @@ const BudgetLimits = () => {
       return { status: 'warning', percentage, spent, budget };
     }
     return { status: 'good', percentage, spent, budget };
-  };
+  }, [categoryBudgets, categorySpending]);
 
   const handleStartEdit = (categoryId) => {
     setEditingCategory(categoryId);
@@ -85,7 +84,7 @@ const BudgetLimits = () => {
       const status = getBudgetStatus(cat.id);
       return status.status === 'exceeded' || status.status === 'warning';
     });
-  }, [categoryBudgets, categorySpending]);
+  }, [getBudgetStatus]);
 
   return (
     <Card title="Budget Limits by Category" icon={Target}>

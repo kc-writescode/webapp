@@ -12,6 +12,20 @@ import Input from '@components/common/Input';
 import Button from '@components/common/Button';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-xl">
+        <p className="text-white font-semibold">{payload[0].name}</p>
+        <p className="text-lg font-bold" style={{ color: payload[0].payload.color }}>
+          {formatCurrency(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const EMICalculator = () => {
   const [principal, setPrincipal] = useState('1000000');
   const [annualRate, setAnnualRate] = useState('8.5');
@@ -28,20 +42,6 @@ const EMICalculator = () => {
     { name: 'Principal', value: Number(principal) || 0, color: '#3b82f6' },
     { name: 'Interest', value: results.totalInterest, color: '#ef4444' },
   ] : [];
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-xl">
-          <p className="text-white font-semibold">{payload[0].name}</p>
-          <p className="text-lg font-bold" style={{ color: payload[0].payload.color }}>
-            {formatCurrency(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="space-y-6">

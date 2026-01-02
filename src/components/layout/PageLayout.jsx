@@ -37,11 +37,11 @@ const PageLayout = ({ children, showNav = true }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white overflow-x-hidden">
       <TopHeader onLogoClick={handleLogoClick} isScrolled={isScrolled} />
       {showNav && <FloatingNavBar />}
 
-      <main className="pt-16">
+      <main className="pt-16 overflow-x-hidden">
         {children}
       </main>
 

@@ -3,12 +3,11 @@
  * Route guard for authenticated pages
  */
 
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '@contexts/AuthContext';
 import AuthModal from './AuthModal';
 
-const ProtectedRoute = ({ children, redirectTo = '/dashboard' }) => {
+const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
