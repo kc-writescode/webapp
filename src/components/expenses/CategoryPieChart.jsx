@@ -95,14 +95,14 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
   return (
     <div>
       {/* Chart */}
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={250}>
         <PieChart>
           <Pie
             data={categoryData}
             cx="50%"
             cy="50%"
             labelLine={false}
-            outerRadius={100}
+            outerRadius={80}
             fill="#8884d8"
             dataKey="value"
           >
@@ -111,37 +111,28 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
             ))}
           </Pie>
           <Tooltip content={renderTooltip} />
-          <Legend
-            verticalAlign="bottom"
-            height={36}
-            formatter={(value, entry) => (
-              <span className="text-slate-300 text-sm">
-                {value}: {formatCurrency(entry.payload.value)}
-              </span>
-            )}
-          />
         </PieChart>
       </ResponsiveContainer>
 
       {/* Category Breakdown List */}
-      <div className="mt-6 space-y-2">
+      <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
         {categoryData.map((item, index) => {
           const percentage = ((item.value / totalAmount) * 100).toFixed(1);
           return (
             <div
               key={item.category}
-              className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+              className="flex items-center justify-between p-2 sm:p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div
-                  className="w-4 h-4 rounded"
+                  className="w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0"
                   style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
-                <span className="text-slate-300 font-medium">{item.name}</span>
+                <span className="text-slate-300 font-medium text-sm sm:text-base truncate">{item.name}</span>
               </div>
-              <div className="text-right">
-                <p className="text-white font-bold">{formatCurrency(item.value)}</p>
-                <p className="text-slate-400 text-sm">{percentage}%</p>
+              <div className="text-right flex-shrink-0 ml-2">
+                <p className="text-white font-bold text-sm sm:text-base">{formatCurrency(item.value)}</p>
+                <p className="text-slate-400 text-xs sm:text-sm">{percentage}%</p>
               </div>
             </div>
           );
