@@ -23,6 +23,7 @@ import {
   CreditCard,
   PiggyBank,
   Shield,
+  Lock,
 } from 'lucide-react';
 import TopHeader from '@components/layout/TopHeader';
 import Button from '@components/common/Button';
@@ -166,7 +167,6 @@ const HomePage = () => {
     { text: '100% Free to use', icon: CheckCircle },
     { text: 'Indian market focused', icon: CheckCircle },
     { text: 'Latest FY 2025-26 tax slabs', icon: CheckCircle },
-    { text: 'UPI & digital payments', icon: CheckCircle },
     { text: 'Real-time market data', icon: CheckCircle },
     { text: 'Secure local storage', icon: CheckCircle },
   ];
@@ -176,6 +176,14 @@ const HomePage = () => {
       setShowAuthModal(true);
     } else {
       navigate(feature.path);
+    }
+  };
+
+  // Handle download - requires login
+  const handleDownload = (e) => {
+    if (!user) {
+      e.preventDefault();
+      setShowAuthModal(true);
     }
   };
 
@@ -236,7 +244,7 @@ const HomePage = () => {
           </div>
 
           {/* Benefits */}
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
               return (
@@ -317,9 +325,10 @@ const HomePage = () => {
               {freeEbooks.map((ebook, index) => (
                 <a
                   key={index}
-                  href={ebook.file}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={user ? ebook.file : '#'}
+                  target={user ? '_blank' : undefined}
+                  rel={user ? 'noopener noreferrer' : undefined}
+                  onClick={handleDownload}
                   className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
                 >
                   <div className="flex items-start gap-4">
@@ -332,9 +341,9 @@ const HomePage = () => {
                       </h3>
                       <p className="text-sm text-slate-300 mb-2">{ebook.subtitle}</p>
                       <p className="text-sm text-slate-400 mb-4">{ebook.description}</p>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
-                        <Download className="w-4 h-4" />
-                        <span>Download Free PDF</span>
+                      <div className={`flex items-center gap-2 text-sm font-semibold ${user ? 'text-emerald-400 group-hover:text-emerald-300' : 'text-blue-400 group-hover:text-blue-300'}`}>
+                        {user ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                        <span>{user ? 'Download Free PDF' : 'Login to Download'}</span>
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
@@ -358,8 +367,9 @@ const HomePage = () => {
                 return (
                   <a
                     key={index}
-                    href={template.file}
-                    download
+                    href={user ? template.file : '#'}
+                    download={user ? true : undefined}
+                    onClick={handleDownload}
                     className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-5 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
                   >
                     <div className="flex items-start gap-4">
@@ -371,9 +381,9 @@ const HomePage = () => {
                           {template.title}
                         </h4>
                         <p className="text-sm text-slate-400 mb-3">{template.description}</p>
-                        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
-                          <Download className="w-4 h-4" />
-                          <span>Download Excel</span>
+                        <div className={`flex items-center gap-2 text-sm font-semibold ${user ? 'text-emerald-400 group-hover:text-emerald-300' : 'text-blue-400 group-hover:text-blue-300'}`}>
+                          {user ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                          <span>{user ? 'Download Excel' : 'Login to Download'}</span>
                         </div>
                       </div>
                     </div>
@@ -387,14 +397,10 @@ const HomePage = () => {
             <Button
               variant="outline"
               onClick={() => navigate('/resources')}
-              className="mb-4"
             >
               View All Resources
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <p className="text-slate-400 text-sm">
-              All resources are 100% free • No signup required • Instant download
-            </p>
           </div>
         </div>
       </section>
@@ -429,7 +435,7 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-slate-800">
         <div className="max-w-7xl mx-auto text-center text-slate-400 text-sm">
-          <p>© 2024 FinLit Hub India. Built for the Indian market with ❤️</p>
+          <p>© 2026 FinKnight India. Built for the Indian market with ❤️</p>
         </div>
       </footer>
 

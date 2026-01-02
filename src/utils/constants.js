@@ -4,7 +4,7 @@
  */
 
 // App Information
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'FinLit Hub';
+export const APP_NAME = import.meta.env.VITE_APP_NAME || 'FinKnight';
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '2.0.0';
 
 // Feature Flags

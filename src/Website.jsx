@@ -18,7 +18,7 @@ const TopHeader = ({ isScrolled, scrollToSection, user }) => (
             onClick={() => scrollToSection('home')}
             className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent hover:scale-105 transition-transform"
           >
-            FinLit Hub
+            FinKnight
           </button>
         </div>
 

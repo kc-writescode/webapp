@@ -13,17 +13,21 @@ import {
   TrendingUp,
   Search,
   ExternalLink,
-  CheckCircle,
   PiggyBank,
   Shield,
   Receipt,
   Star,
+  Lock,
 } from 'lucide-react';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
 import Input from '@components/common/Input';
+import { useAuth } from '@contexts/AuthContext';
+import AuthModal from '@components/auth/AuthModal';
 
 const FreeResources = () => {
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
 
@@ -183,6 +187,16 @@ const FreeResources = () => {
     { label: 'User Rating', value: '4.8★', icon: Star },
   ];
 
+  // Handle download - requires login
+  const handleDownload = (e, file, isNewTab = false) => {
+    if (!user) {
+      e.preventDefault();
+      setShowAuthModal(true);
+      return;
+    }
+    // If user is logged in, allow default behavior
+  };
+
   return (
     <PageLayout>
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -263,9 +277,10 @@ const FreeResources = () => {
               {filteredEbooks.map((ebook) => (
                 <a
                   key={ebook.id}
-                  href={ebook.file}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={user ? ebook.file : '#'}
+                  target={user ? '_blank' : undefined}
+                  rel={user ? 'noopener noreferrer' : undefined}
+                  onClick={(e) => handleDownload(e, ebook.file, true)}
                   className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
                 >
                   <div className="flex items-start gap-4">
@@ -287,10 +302,10 @@ const FreeResources = () => {
                       <p className="text-sm text-slate-400 mb-3">{ebook.description}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">{ebook.pages}</span>
-                        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
-                          <Download className="w-4 h-4" />
-                          <span>Download Free PDF</span>
-                          <ExternalLink className="w-3 h-3" />
+                        <div className={`flex items-center gap-2 text-sm font-semibold ${user ? 'text-emerald-400 group-hover:text-emerald-300' : 'text-blue-400 group-hover:text-blue-300'}`}>
+                          {user ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                          <span>{user ? 'Download Free PDF' : 'Login to Download'}</span>
+                          {user && <ExternalLink className="w-3 h-3" />}
                         </div>
                       </div>
                     </div>
@@ -320,8 +335,9 @@ const FreeResources = () => {
                 return (
                   <a
                     key={template.id}
-                    href={template.file}
-                    download
+                    href={user ? template.file : '#'}
+                    download={user ? true : undefined}
+                    onClick={(e) => handleDownload(e, template.file)}
                     className="group cursor-pointer bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:bg-slate-800/70 hover:border-slate-500 transition-all duration-300 hover:scale-[1.02] block"
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -351,9 +367,9 @@ const FreeResources = () => {
                     )}
                     <div className="flex items-center justify-between pt-4 border-t border-slate-700">
                       <span className="text-xs text-slate-500">{template.type}</span>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300">
-                        <Download className="w-4 h-4" />
-                        <span>Download</span>
+                      <div className={`flex items-center gap-2 text-sm font-semibold ${user ? 'text-emerald-400 group-hover:text-emerald-300' : 'text-blue-400 group-hover:text-blue-300'}`}>
+                        {user ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                        <span>{user ? 'Download' : 'Login to Download'}</span>
                       </div>
                     </div>
                   </a>
@@ -384,21 +400,32 @@ const FreeResources = () => {
         )}
 
         {/* Info Banner */}
-        <Card className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-emerald-500/30">
-          <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-            <div className="p-3 bg-emerald-500/20 rounded-full">
-              <CheckCircle className="w-8 h-8 text-emerald-400" />
+        {!user && (
+          <Card className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/30">
+            <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+              <div className="p-3 bg-blue-500/20 rounded-full">
+                <Lock className="w-8 h-8 text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-1">Login to Download Resources</h3>
+                <p className="text-slate-300 text-sm">
+                  Create a free account to access all eBooks and Excel spreadsheets.
+                  Our mission is to make financial literacy accessible to everyone in India.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Login / Sign Up
+              </button>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-white mb-1">All Resources Are Free</h3>
-              <p className="text-slate-300 text-sm">
-                No signup required. No hidden costs. Just download and start learning.
-                Our mission is to make financial literacy accessible to everyone in India.
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </PageLayout>
   );
 };
