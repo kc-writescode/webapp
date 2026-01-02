@@ -1,24 +1,53 @@
 /**
  * PriceChart Component
  * Interactive price chart for stocks and cryptos using Recharts
+ * Performance optimized with lazy loading
  */
 
-import { useState, useEffect } from 'react';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { getIntradayData, getDailyData } from '@services/alphaVantageService';
+
+// Lazy load Recharts components for better initial page load
+const LazyLineChart = lazy(() =>
+  import('recharts').then((module) => ({ default: module.LineChart }))
+);
+const LazyLine = lazy(() =>
+  import('recharts').then((module) => ({ default: module.Line }))
+);
+const LazyAreaChart = lazy(() =>
+  import('recharts').then((module) => ({ default: module.AreaChart }))
+);
+const LazyArea = lazy(() =>
+  import('recharts').then((module) => ({ default: module.Area }))
+);
+const LazyXAxis = lazy(() =>
+  import('recharts').then((module) => ({ default: module.XAxis }))
+);
+const LazyYAxis = lazy(() =>
+  import('recharts').then((module) => ({ default: module.YAxis }))
+);
+const LazyCartesianGrid = lazy(() =>
+  import('recharts').then((module) => ({ default: module.CartesianGrid }))
+);
+const LazyTooltip = lazy(() =>
+  import('recharts').then((module) => ({ default: module.Tooltip }))
+);
+const LazyResponsiveContainer = lazy(() =>
+  import('recharts').then((module) => ({ default: module.ResponsiveContainer }))
+);
 import { getCryptoChart } from '@services/coingeckoService';
 import { formatCurrency, formatDate } from '@utils/formatters';
 import Button from '@components/common/Button';
+
+// Chart loading skeleton
+const ChartSkeleton = () => (
+  <div className="chart-skeleton h-[400px] w-full flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-full h-64 skeleton mx-auto mb-3 rounded-lg" />
+      <p className="text-slate-500 text-sm">Loading chart...</p>
+    </div>
+  </div>
+);
 
 const TIME_RANGES = {
   stock: [
@@ -189,70 +218,72 @@ const PriceChart = ({ symbol, name, type, coinId }) => {
         </div>
       </div>
 
-      {/* Chart */}
-      <ResponsiveContainer width="100%" height={400}>
-        {chartType === 'area' ? (
-          <AreaChart data={chartData}>
-            <defs>
-              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor={priceUp ? '#10b981' : '#ef4444'}
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="95%"
-                  stopColor={priceUp ? '#10b981' : '#ef4444'}
-                  stopOpacity={0}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis
-              dataKey="time"
-              stroke="#94a3b8"
-              tick={{ fill: '#94a3b8', fontSize: 12 }}
-            />
-            <YAxis
-              stroke="#94a3b8"
-              tick={{ fill: '#94a3b8', fontSize: 12 }}
-              domain={['auto', 'auto']}
-              tickFormatter={(value) => formatCurrency(value, 'USD', false)}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="price"
-              stroke={priceUp ? '#10b981' : '#ef4444'}
-              strokeWidth={2}
-              fill="url(#colorPrice)"
-            />
-          </AreaChart>
-        ) : (
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis
-              dataKey="time"
-              stroke="#94a3b8"
-              tick={{ fill: '#94a3b8', fontSize: 12 }}
-            />
-            <YAxis
-              stroke="#94a3b8"
-              tick={{ fill: '#94a3b8', fontSize: 12 }}
-              domain={['auto', 'auto']}
-              tickFormatter={(value) => formatCurrency(value, 'USD', false)}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke={priceUp ? '#10b981' : '#ef4444'}
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        )}
-      </ResponsiveContainer>
+      {/* Chart - Lazy loaded */}
+      <Suspense fallback={<ChartSkeleton />}>
+        <LazyResponsiveContainer width="100%" height={400}>
+          {chartType === 'area' ? (
+            <LazyAreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={priceUp ? '#10b981' : '#ef4444'}
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={priceUp ? '#10b981' : '#ef4444'}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              <LazyCartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <LazyXAxis
+                dataKey="time"
+                stroke="#94a3b8"
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+              />
+              <LazyYAxis
+                stroke="#94a3b8"
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => formatCurrency(value, 'USD', false)}
+              />
+              <LazyTooltip content={<CustomTooltip />} />
+              <LazyArea
+                type="monotone"
+                dataKey="price"
+                stroke={priceUp ? '#10b981' : '#ef4444'}
+                strokeWidth={2}
+                fill="url(#colorPrice)"
+              />
+            </LazyAreaChart>
+          ) : (
+            <LazyLineChart data={chartData}>
+              <LazyCartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <LazyXAxis
+                dataKey="time"
+                stroke="#94a3b8"
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+              />
+              <LazyYAxis
+                stroke="#94a3b8"
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => formatCurrency(value, 'USD', false)}
+              />
+              <LazyTooltip content={<CustomTooltip />} />
+              <LazyLine
+                type="monotone"
+                dataKey="price"
+                stroke={priceUp ? '#10b981' : '#ef4444'}
+                strokeWidth={2}
+                dot={false}
+              />
+            </LazyLineChart>
+          )}
+        </LazyResponsiveContainer>
+      </Suspense>
 
       {/* Chart Info */}
       <div className="text-center text-sm text-slate-400">

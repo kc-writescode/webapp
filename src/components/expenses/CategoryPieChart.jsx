@@ -1,12 +1,30 @@
 /**
  * CategoryPieChart Component
  * Pie chart showing expense/income breakdown by category
+ * Performance optimized with lazy loading
  */
 
-import { useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useMemo, lazy, Suspense } from 'react';
 import { getCategoryById } from '@data/categories';
 import { formatCurrency } from '@utils/formatters';
+import useIntersectionObserver from '@hooks/useIntersectionObserver';
+
+// Lazy load Recharts components for better initial page load
+const LazyPieChart = lazy(() =>
+  import('recharts').then((module) => ({ default: module.PieChart }))
+);
+const LazyPie = lazy(() =>
+  import('recharts').then((module) => ({ default: module.Pie }))
+);
+const LazyCell = lazy(() =>
+  import('recharts').then((module) => ({ default: module.Cell }))
+);
+const LazyResponsiveContainer = lazy(() =>
+  import('recharts').then((module) => ({ default: module.ResponsiveContainer }))
+);
+const LazyTooltip = lazy(() =>
+  import('recharts').then((module) => ({ default: module.Tooltip }))
+);
 
 const EXPENSE_COLORS = [
   '#3b82f6', // blue
@@ -34,8 +52,19 @@ const INCOME_COLORS = [
   '#d946ef', // fuchsia
 ];
 
+// Chart loading skeleton
+const ChartSkeleton = () => (
+  <div className="chart-skeleton h-[250px] w-full flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-24 h-24 rounded-full skeleton mx-auto mb-3" />
+      <p className="text-slate-500 text-sm">Loading chart...</p>
+    </div>
+  </div>
+);
+
 const CategoryPieChart = ({ expenses, type = 'expense' }) => {
   const COLORS = type === 'income' ? INCOME_COLORS : EXPENSE_COLORS;
+  const { ref, hasBeenVisible } = useIntersectionObserver({ threshold: 0.1 });
 
   // Group expenses by category
   const categoryData = useMemo(() => {
@@ -93,26 +122,32 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
   }
 
   return (
-    <div>
-      {/* Chart */}
-      <ResponsiveContainer width="100%" height={250}>
-        <PieChart>
-          <Pie
-            data={categoryData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-          >
-            {categoryData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip content={renderTooltip} />
-        </PieChart>
-      </ResponsiveContainer>
+    <div ref={ref}>
+      {/* Chart - Lazy loaded when visible */}
+      {hasBeenVisible ? (
+        <Suspense fallback={<ChartSkeleton />}>
+          <LazyResponsiveContainer width="100%" height={250}>
+            <LazyPieChart>
+              <LazyPie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {categoryData.map((entry, index) => (
+                  <LazyCell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </LazyPie>
+              <LazyTooltip content={renderTooltip} />
+            </LazyPieChart>
+          </LazyResponsiveContainer>
+        </Suspense>
+      ) : (
+        <ChartSkeleton />
+      )}
 
       {/* Category Breakdown List */}
       <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">

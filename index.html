@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+
+    <!-- Performance: DNS Prefetch & Preconnect -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <!-- SEO Meta Tags -->
     <meta name="description" content="Master your money with free financial literacy resources, expert insights, and practical tools. Learn about investing, taxes, credit scores, and personal finance." />
@@ -20,21 +26,39 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Performance Hints -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta http-equiv="x-dns-prefetch-control" content="on" />
 
     <title>FinLit Hub - Master Your Money | Financial Literacy Resources</title>
+
+    <!-- Critical CSS for initial paint -->
+    <style>
+      /* Critical CSS for above-the-fold content */
+      *,*::before,*::after{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%;line-height:1.5}
+      body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#fff}
+      #root{min-height:100vh}
+      .loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)}
+      .loading-spinner{width:48px;height:48px;border:4px solid rgba(59,130,246,0.3);border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
   </head>
   <body>
     <noscript>
-      <div style="text-align: center; padding: 2rem; font-family: system-ui, sans-serif;">
+      <div style="text-align: center; padding: 2rem; font-family: system-ui, sans-serif; background: #0f172a; color: #fff; min-height: 100vh;">
         <h1>JavaScript Required</h1>
         <p>Please enable JavaScript to use this application.</p>
       </div>
     </noscript>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial loading state for better perceived performance -->
+      <div class="loading-screen">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
