@@ -9,15 +9,13 @@ import { getCategoryById } from '@data/categories';
 import { formatCurrency } from '@utils/formatters';
 import useIntersectionObserver from '@hooks/useIntersectionObserver';
 
-// Lazy load Recharts components for better initial page load
+// Lazy load heavy Recharts components for better initial page load
+// Note: Cell is imported directly as it's lightweight and must be a direct child of Pie
 const LazyPieChart = lazy(() =>
   import('recharts').then((module) => ({ default: module.PieChart }))
 );
 const LazyPie = lazy(() =>
   import('recharts').then((module) => ({ default: module.Pie }))
-);
-const LazyCell = lazy(() =>
-  import('recharts').then((module) => ({ default: module.Cell }))
 );
 const LazyResponsiveContainer = lazy(() =>
   import('recharts').then((module) => ({ default: module.ResponsiveContainer }))
@@ -25,6 +23,10 @@ const LazyResponsiveContainer = lazy(() =>
 const LazyTooltip = lazy(() =>
   import('recharts').then((module) => ({ default: module.Tooltip }))
 );
+
+// Cell must be imported directly - it's a lightweight component that sets fill colors
+// and doesn't work properly when lazy-loaded inside Pie's children
+import { Cell } from 'recharts';
 
 const EXPENSE_COLORS = [
   '#3b82f6', // blue
@@ -138,7 +140,7 @@ const CategoryPieChart = ({ expenses, type = 'expense' }) => {
                 dataKey="value"
               >
                 {categoryData.map((entry, index) => (
-                  <LazyCell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={entry.category} fill={COLORS[index % COLORS.length]} />
                 ))}
               </LazyPie>
               <LazyTooltip content={renderTooltip} />
