@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Calculator, TrendingUp, Home, Receipt, Landmark, Shield } from 'lucide-react';
+import { Calculator, TrendingUp, Home, Receipt, Landmark, Shield, Lock } from 'lucide-react';
 import { useAuth } from '@contexts/AuthContext';
 import PageLayout from '@components/layout/PageLayout';
 import Card from '@components/common/Card';
@@ -86,9 +86,14 @@ const CalculatorHub = () => {
 
   // Handle selecting a calculator - push state for browser history
   const handleSelectCalculator = useCallback((calc) => {
+    // If user is not logged in, show auth modal instead
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     setSelectedCalculator(calc);
     globalThis.history.pushState({ calculator: calc.id }, '', `/calculators/${calc.id}`);
-  }, []);
+  }, [user]);
 
   // Handle back button click
   const handleBack = useCallback(() => {
@@ -105,28 +110,6 @@ const CalculatorHub = () => {
     globalThis.addEventListener('popstate', handlePopState);
     return () => globalThis.removeEventListener('popstate', handlePopState);
   }, []);
-
-  // Show auth modal if user is not logged in
-  if (!user) {
-    return (
-      <PageLayout>
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔐</div>
-            <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
-            <p className="text-slate-400 mb-6">Please login to access the financial calculators</p>
-            <Button variant="primary" onClick={() => setShowAuthModal(true)}>
-              Login / Sign Up
-            </Button>
-          </div>
-        </div>
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      </PageLayout>
-    );
-  }
 
   const SelectedComponent = selectedCalculator?.component;
 
@@ -206,9 +189,16 @@ const CalculatorHub = () => {
                     </p>
 
                     {/* CTA */}
-                    <div className={`text-sm font-semibold bg-gradient-to-r ${calc.color} bg-clip-text text-transparent`}>
-                      Calculate Now →
-                    </div>
+                    {user ? (
+                      <div className={`text-sm font-semibold bg-gradient-to-r ${calc.color} bg-clip-text text-transparent`}>
+                        Calculate Now →
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-400">
+                        <Lock className="w-3.5 h-3.5" />
+                        Login to access
+                      </div>
+                    )}
                   </div>
                 </Card>
               </div>
@@ -235,6 +225,12 @@ const CalculatorHub = () => {
           </div>
         </Card>
       </div>
+
+      {/* Auth Modal for non-logged-in users */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </PageLayout>
   );
 };
