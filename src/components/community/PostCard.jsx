@@ -40,13 +40,13 @@ const PostCard = ({ post }) => {
   const hoursSinceCreation = (mountTime - post.createdAt) / (1000 * 60 * 60);
   const canEdit = isAuthor && hoursSinceCreation <= 24;
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editTitle.trim() || !editContent.trim()) {
       toast.error('Title and content are required');
       return;
     }
 
-    const result = updatePost(post.id, {
+    const result = await updatePost(post.id, {
       title: editTitle.trim(),
       content: editContent.trim(),
     });
@@ -65,12 +65,12 @@ const PostCard = ({ post }) => {
     setIsEditing(false);
   };
 
-  const handleVote = (voteType) => {
+  const handleVote = async (voteType) => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-    const result = voteOnPost(post.id, voteType);
+    const result = await voteOnPost(post.id, voteType);
     // Track upvote received for post author (if upvoting someone else's post)
     if (result?.success && voteType === 'upvote' && !isAuthor) {
       trackUpvoteReceived();
@@ -96,8 +96,8 @@ const PostCard = ({ post }) => {
     }
   };
 
-  const handleDelete = () => {
-    const result = deletePost(post.id);
+  const handleDelete = async () => {
+    const result = await deletePost(post.id);
     if (result.success) {
       setShowDeleteConfirm(false);
     }

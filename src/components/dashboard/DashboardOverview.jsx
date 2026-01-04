@@ -162,11 +162,11 @@ const DashboardOverview = () => {
     };
   }, [currentMonthExpenses, currentMonthTransactions, totalExpenses, totalIncome]);
 
-  const handleAddExpense = (transactionData) => {
+  const handleAddExpense = async (transactionData) => {
     const isIncome = transactionData.type === 'income';
     const result = isIncome
-      ? addIncome(transactionData)
-      : addExpense(transactionData);
+      ? await addIncome(transactionData)
+      : await addExpense(transactionData);
     if (result.success) {
       setShowExpenseModal(false);
       toast.success(`${isIncome ? 'Income' : 'Expense'} added successfully!`);
@@ -176,11 +176,11 @@ const DashboardOverview = () => {
     }
   };
 
-  const handleEditExpense = (id, updates) => {
+  const handleEditExpense = async (id, updates) => {
     const isIncome = updates.type === 'income';
     const result = isIncome
-      ? updateIncome(id, updates)
-      : updateExpense(id, updates);
+      ? await updateIncome(id, updates)
+      : await updateExpense(id, updates);
     if (result.success) {
       toast.success('Transaction updated successfully!');
     } else {
@@ -188,11 +188,11 @@ const DashboardOverview = () => {
     }
   };
 
-  const handleDeleteExpense = (id, type) => {
+  const handleDeleteExpense = async (id, type) => {
     const isIncome = type === 'income';
     const result = isIncome
-      ? deleteIncome(id)
-      : deleteExpense(id);
+      ? await deleteIncome(id)
+      : await deleteExpense(id);
     if (result.success) {
       toast.success('Transaction deleted successfully!');
     } else {

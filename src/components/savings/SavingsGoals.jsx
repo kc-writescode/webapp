@@ -83,8 +83,8 @@ const SavingsGoals = () => {
     return filtered;
   }, [savingsGoals, searchTerm, sortBy]);
 
-  const handleCreateGoal = (goalData) => {
-    const result = createGoal(goalData);
+  const handleCreateGoal = async (goalData) => {
+    const result = await createGoal(goalData);
     if (result.success) {
       setShowCreateModal(false);
       toast.success('Savings goal created successfully!');
@@ -94,8 +94,8 @@ const SavingsGoals = () => {
     }
   };
 
-  const handleUpdateGoal = (id, updates) => {
-    const result = updateGoal(id, updates);
+  const handleUpdateGoal = async (id, updates) => {
+    const result = await updateGoal(id, updates);
     if (result.success) {
       toast.success('Goal updated successfully!');
     } else {
@@ -103,8 +103,8 @@ const SavingsGoals = () => {
     }
   };
 
-  const handleDeleteGoal = (id) => {
-    const result = deleteGoal(id);
+  const handleDeleteGoal = async (id) => {
+    const result = await deleteGoal(id);
     if (result.success) {
       toast.success('Goal deleted successfully!');
     } else {
@@ -112,13 +112,13 @@ const SavingsGoals = () => {
     }
   };
 
-  const handleAddContribution = (goalId, amount) => {
+  const handleAddContribution = async (goalId, amount) => {
     // Check if goal will be completed after this contribution
     const goal = savingsGoals.find((g) => g.id === goalId);
     const wasIncomplete = goal && goal.currentAmount < goal.targetAmount;
     const willBeComplete = goal && (goal.currentAmount + amount) >= goal.targetAmount;
 
-    const result = addContribution(goalId, amount);
+    const result = await addContribution(goalId, amount);
     if (result.success) {
       toast.success(`Added ${formatCurrency(amount)} to your goal!`);
       trackContribution(); // Track for achievements

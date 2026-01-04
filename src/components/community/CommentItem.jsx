@@ -33,12 +33,12 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
   const hoursSinceCreation = (mountTime - comment.createdAt) / (1000 * 60 * 60);
   const canEdit = isAuthor && hoursSinceCreation <= 24;
 
-  const handleVote = (voteType) => {
+  const handleVote = async (voteType) => {
     if (!user) {
       alert('Please login to vote');
       return;
     }
-    voteOnComment(postId, comment.id, voteType);
+    await voteOnComment(postId, comment.id, voteType);
   };
 
   const handleSubmitReply = async (e) => {
@@ -55,7 +55,7 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
 
     setIsSubmitting(true);
 
-    const result = addComment(postId, {
+    const result = await addComment(postId, {
       content: replyText.trim(),
       parentId: comment.id,
     });
@@ -68,13 +68,13 @@ const CommentItem = ({ comment, postId, level = 0 }) => {
     setIsSubmitting(false);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editContent.trim()) {
       toast.error('Comment cannot be empty');
       return;
     }
 
-    const result = updateComment(postId, comment.id, editContent.trim());
+    const result = await updateComment(postId, comment.id, editContent.trim());
 
     if (result.success) {
       toast.success('Comment updated!');

@@ -58,14 +58,14 @@ const CreatePostForm = ({ onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    const result = createPost({
+    const result = await createPost({
       title: formData.title.trim(),
       content: formData.content.trim(),
       category: formData.category,
