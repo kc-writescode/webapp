@@ -33,38 +33,50 @@ const ExpenseTracker = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showChartView, setShowChartView] = useState(false);
 
-  const handleAddTransaction = (transactionData) => {
+  const handleAddTransaction = async (transactionData) => {
     let result;
     if (transactionData.type === 'income') {
-      result = addIncome(transactionData);
+      result = await addIncome(transactionData);
     } else {
-      result = addExpense(transactionData);
+      result = await addExpense(transactionData);
     }
 
     if (result.success) {
       setShowAddModal(false);
       console.log(transactionData.type === 'income' ? 'Income added successfully' : SUCCESS_MESSAGES.EXPENSE_ADDED);
+    } else {
+      console.error('Failed to add transaction:', result.error);
     }
   };
 
-  const handleEditTransaction = (id, updates) => {
+  const handleEditTransaction = async (id, updates) => {
     // Determine if it's income or expense based on the type
+    let result;
     if (updates.type === 'income') {
-      updateIncome(id, updates);
-      console.log('Income updated successfully');
+      result = await updateIncome(id, updates);
     } else {
-      updateExpense(id, updates);
-      console.log(SUCCESS_MESSAGES.EXPENSE_UPDATED);
+      result = await updateExpense(id, updates);
+    }
+
+    if (result.success) {
+      console.log(updates.type === 'income' ? 'Income updated successfully' : SUCCESS_MESSAGES.EXPENSE_UPDATED);
+    } else {
+      console.error('Failed to update transaction:', result.error);
     }
   };
 
-  const handleDeleteTransaction = (id, type) => {
+  const handleDeleteTransaction = async (id, type) => {
+    let result;
     if (type === 'income') {
-      deleteIncome(id);
-      console.log('Income deleted successfully');
+      result = await deleteIncome(id);
     } else {
-      deleteExpense(id);
-      console.log(SUCCESS_MESSAGES.EXPENSE_DELETED);
+      result = await deleteExpense(id);
+    }
+
+    if (result.success) {
+      console.log(type === 'income' ? 'Income deleted successfully' : SUCCESS_MESSAGES.EXPENSE_DELETED);
+    } else {
+      console.error('Failed to delete transaction:', result.error);
     }
   };
 
