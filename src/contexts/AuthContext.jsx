@@ -1,32 +1,59 @@
 /**
  * Authentication Context
- * Manages user authentication state with localStorage persistence
+ * Manages user authentication state with Supabase
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getItem, setItem, removeItem, migrateData, STORAGE_KEYS } from '@utils/localStorage';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '@services/supabaseClient';
 import { DEFAULT_PREFERENCES } from '@utils/constants';
-import { v4 as uuidv4 } from 'uuid';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [session, setSession] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const initAuth = () => {
-      try {
-        // Migrate old data if exists
-        migrateData();
+  // Fetch user profile from Supabase
+  const fetchProfile = useCallback(async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-        // Load user data
-        const storedUser = getItem(STORAGE_KEYS.USER);
-        if (storedUser) {
-          setUser(storedUser);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+  }, []);
+
+  // Initialize auth state
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
           setIsAuthenticated(true);
+
+          // Fetch profile
+          const userProfile = await fetchProfile(initialSession.user.id);
+          if (userProfile) {
+            setProfile(userProfile);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -36,89 +63,139 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
 
-  // Login function
-  const login = useCallback((username, password) => {
-    try {
-      // In a real app, this would validate against a backend
-      // For now, we'll check against localStorage or create new user
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log('Auth state changed:', event);
 
-      const existingUser = getItem(STORAGE_KEYS.USER);
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        setIsAuthenticated(true);
 
-      // Check if user exists and password matches (very basic check)
-      if (existingUser) {
-        if (existingUser.username === username && existingUser.password === password) {
-          setUser(existingUser);
-          setIsAuthenticated(true);
-          return { success: true, user: existingUser };
-        } else {
-          return { success: false, error: 'Invalid username or password' };
+        // Fetch profile on sign in
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          const userProfile = await fetchProfile(currentSession.user.id);
+          if (userProfile) {
+            setProfile(userProfile);
+          }
         }
+      } else {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setIsAuthenticated(false);
       }
 
-      // If no existing user, create new one (simplified for demo)
-      const newUser = {
-        id: uuidv4(),
-        username,
-        password, // In production, NEVER store plain text passwords!
-        email: `${username}@example.com`,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3b82f6&color=fff`,
-        createdAt: Date.now(),
-        preferences: { ...DEFAULT_PREFERENCES },
-        bookmarkedPosts: [],
-      };
+      setLoading(false);
+    });
 
-      setItem(STORAGE_KEYS.USER, newUser);
-      setUser(newUser);
-      setIsAuthenticated(true);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
 
-      return { success: true, user: newUser };
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'An error occurred during login' };
-    }
-  }, []);
-
-  // Signup function
-  const signup = useCallback((username, email, password, phoneNumber = '') => {
+  // Sign up with email and password
+  const signup = useCallback(async (email, password, username, phoneNumber = '') => {
     try {
-      // Check if user already exists
-      const existingUser = getItem(STORAGE_KEYS.USER);
-      if (existingUser && existingUser.username === username) {
-        return { success: false, error: 'Username already exists' };
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            phone_number: phoneNumber,
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      // Create new user
-      const newUser = {
-        id: uuidv4(),
-        username,
-        email,
-        phoneNumber,
-        password, // In production, NEVER store plain text passwords!
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=3b82f6&color=fff`,
-        createdAt: Date.now(),
-        preferences: { ...DEFAULT_PREFERENCES },
-        bookmarkedPosts: [],
-      };
+      // If email confirmation is required
+      if (data.user && !data.session) {
+        return {
+          success: true,
+          user: data.user,
+          message: 'Please check your email to confirm your account.',
+          requiresConfirmation: true
+        };
+      }
 
-      setItem(STORAGE_KEYS.USER, newUser);
-      setUser(newUser);
-      setIsAuthenticated(true);
-
-      return { success: true, user: newUser };
+      return { success: true, user: data.user };
     } catch (error) {
       console.error('Signup error:', error);
       return { success: false, error: 'An error occurred during signup' };
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Logout function
-  const logout = useCallback(() => {
+  // Login with email and password
+  const login = useCallback(async (email, password) => {
     try {
-      removeItem(STORAGE_KEYS.USER);
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'An error occurred during login' };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Sign in with Google
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, url: data.url };
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      return { success: false, error: 'An error occurred during Google sign-in' };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Logout
+  const logout = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
       setUser(null);
+      setProfile(null);
+      setSession(null);
       setIsAuthenticated(false);
+
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
@@ -127,22 +204,28 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Update user profile
-  const updateProfile = useCallback((updates) => {
+  const updateProfile = useCallback(async (updates) => {
     try {
       if (!user) {
         return { success: false, error: 'No user logged in' };
       }
 
-      const updatedUser = {
-        ...user,
-        ...updates,
-        updatedAt: Date.now(),
-      };
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
 
-      setItem(STORAGE_KEYS.USER, updatedUser);
-      setUser(updatedUser);
+      if (error) {
+        return { success: false, error: error.message };
+      }
 
-      return { success: true, user: updatedUser };
+      setProfile(data);
+      return { success: true, profile: data };
     } catch (error) {
       console.error('Update profile error:', error);
       return { success: false, error: 'An error occurred while updating profile' };
@@ -150,76 +233,126 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   // Update user preferences
-  const updatePreferences = useCallback((preferences) => {
+  const updatePreferences = useCallback(async (preferences) => {
     try {
-      if (!user) {
+      if (!user || !profile) {
         return { success: false, error: 'No user logged in' };
       }
 
-      const updatedUser = {
-        ...user,
-        preferences: {
-          ...user.preferences,
-          ...preferences,
-        },
-        updatedAt: Date.now(),
+      const updatedPreferences = {
+        ...profile.preferences,
+        ...preferences,
       };
 
-      setItem(STORAGE_KEYS.USER, updatedUser);
-      setUser(updatedUser);
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          preferences: updatedPreferences,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
 
-      return { success: true, user: updatedUser };
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      setProfile(data);
+      return { success: true, profile: data };
     } catch (error) {
       console.error('Update preferences error:', error);
       return { success: false, error: 'An error occurred while updating preferences' };
     }
-  }, [user]);
+  }, [user, profile]);
 
   // Toggle bookmark on a post
-  const toggleBookmark = useCallback((postId) => {
+  const toggleBookmark = useCallback(async (postId) => {
     try {
-      if (!user) return { success: false, error: 'Must be logged in' };
+      if (!user || !profile) {
+        return { success: false, error: 'Must be logged in' };
+      }
 
-      const bookmarkedPosts = user.bookmarkedPosts || [];
+      const bookmarkedPosts = profile.bookmarked_posts || [];
       const isBookmarked = bookmarkedPosts.includes(postId);
 
       const updatedBookmarks = isBookmarked
         ? bookmarkedPosts.filter((id) => id !== postId)
         : [...bookmarkedPosts, postId];
 
-      const updatedUser = {
-        ...user,
-        bookmarkedPosts: updatedBookmarks,
-        updatedAt: Date.now(),
-      };
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          bookmarked_posts: updatedBookmarks,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
 
-      setItem(STORAGE_KEYS.USER, updatedUser);
-      setUser(updatedUser);
+      if (error) {
+        return { success: false, error: error.message };
+      }
 
+      setProfile(data);
       return { success: true, isBookmarked: !isBookmarked };
     } catch (error) {
       console.error('Toggle bookmark error:', error);
       return { success: false, error: 'Failed to update bookmark' };
     }
-  }, [user]);
+  }, [user, profile]);
 
   // Check if a post is bookmarked
   const isPostBookmarked = useCallback((postId) => {
-    if (!user) return false;
-    return (user.bookmarkedPosts || []).includes(postId);
-  }, [user]);
+    if (!profile) return false;
+    return (profile.bookmarked_posts || []).includes(postId);
+  }, [profile]);
+
+  // Reset password
+  const resetPassword = useCallback(async (email) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, message: 'Password reset email sent' };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: 'An error occurred' };
+    }
+  }, []);
+
+  // Combined user object for backwards compatibility
+  const combinedUser = profile ? {
+    id: user?.id,
+    username: profile.username,
+    email: profile.email || user?.email,
+    phoneNumber: profile.phone_number,
+    avatar: profile.avatar,
+    preferences: profile.preferences || DEFAULT_PREFERENCES,
+    bookmarkedPosts: profile.bookmarked_posts || [],
+    createdAt: profile.created_at,
+    updatedAt: profile.updated_at,
+  } : null;
 
   const value = {
-    user,
+    user: combinedUser,
+    session,
     isAuthenticated,
     loading,
     login,
     signup,
     logout,
+    signInWithGoogle,
     updateProfile,
     updatePreferences,
     toggleBookmark,
     isPostBookmarked,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

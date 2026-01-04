@@ -1,27 +1,27 @@
 /**
  * Budget Context
  * Manages all financial data: expenses, budgets, income, savings goals
+ * Uses Supabase for data persistence
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
-import { getItem, setItem, STORAGE_KEYS } from '@utils/localStorage';
+import { supabase } from '@services/supabaseClient';
 import { getCurrentMonth } from '@utils/formatters';
-import { v4 as uuidv4 } from 'uuid';
 
 const BudgetContext = createContext(null);
 
 export const BudgetProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [income, setIncome] = useState([]);
   const [savingsGoals, setSavingsGoals] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load data from localStorage when user changes
+  // Load data from Supabase when user changes
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated && user) {
       loadUserData();
     } else {
       // Clear data when user logs out
@@ -31,19 +31,38 @@ export const BudgetProvider = ({ children }) => {
       setSavingsGoals([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [isAuthenticated, user]);
 
-  const loadUserData = () => {
+  const loadUserData = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const userExpenses = getItem(STORAGE_KEYS.EXPENSES, []);
-      const userBudgets = getItem(STORAGE_KEYS.BUDGETS, []);
-      const userIncome = getItem(STORAGE_KEYS.INCOME, []);
-      const userGoals = getItem(STORAGE_KEYS.GOALS, []);
+      setLoading(true);
 
-      setExpenses(userExpenses);
-      setBudgets(userBudgets);
-      setIncome(userIncome);
-      setSavingsGoals(userGoals);
+      // Fetch all data in parallel
+      const [expensesRes, budgetsRes, incomeRes, goalsRes] = await Promise.all([
+        supabase.from('expenses').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+        supabase.from('budgets').select('*').eq('user_id', user.id),
+        supabase.from('income').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+        supabase.from('savings_goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      ]);
+
+      // Transform data to match frontend format
+      if (expensesRes.data) {
+        setExpenses(expensesRes.data.map(transformExpenseFromDb));
+      }
+      if (budgetsRes.data) {
+        setBudgets(budgetsRes.data.map(transformBudgetFromDb));
+      }
+      if (incomeRes.data) {
+        setIncome(incomeRes.data.map(transformIncomeFromDb));
+      }
+      if (goalsRes.data) {
+        setSavingsGoals(goalsRes.data.map(transformGoalFromDb));
+      }
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
@@ -51,317 +70,454 @@ export const BudgetProvider = ({ children }) => {
     }
   };
 
-  // Helper to calculate next recurrence date
-  const getNextRecurrenceDate = (currentDate, recurrence) => {
-    const date = new Date(currentDate);
-    switch (recurrence) {
-      case 'weekly':
-        date.setDate(date.getDate() + 7);
-        break;
-      case 'biweekly':
-        date.setDate(date.getDate() + 14);
-        break;
-      case 'monthly':
-        date.setMonth(date.getMonth() + 1);
-        break;
-      case 'yearly':
-        date.setFullYear(date.getFullYear() + 1);
-        break;
-      default:
-        return null;
-    }
-    return date.getTime();
-  };
+  // Transform functions for database <-> frontend format
+  const transformExpenseFromDb = (expense) => ({
+    id: expense.id,
+    userId: expense.user_id,
+    category: expense.category,
+    amount: parseFloat(expense.amount),
+    description: expense.description,
+    date: new Date(expense.date).getTime(),
+    paymentMethod: expense.payment_method,
+    recurrence: expense.recurrence,
+    createdAt: new Date(expense.created_at).getTime(),
+    updatedAt: new Date(expense.updated_at).getTime(),
+  });
 
-  // Save recurring transaction template
-  const saveRecurringTemplate = useCallback((transactionData) => {
-    if (transactionData.recurrence && transactionData.recurrence !== 'none') {
-      try {
-        const recurringTemplates = getItem(STORAGE_KEYS.RECURRING_TRANSACTIONS, []);
-        const nextDueDate = getNextRecurrenceDate(transactionData.date, transactionData.recurrence);
+  const transformIncomeFromDb = (income) => ({
+    id: income.id,
+    userId: income.user_id,
+    category: income.category,
+    amount: parseFloat(income.amount),
+    description: income.description,
+    date: new Date(income.date).getTime(),
+    recurrence: income.recurrence,
+    createdAt: new Date(income.created_at).getTime(),
+    updatedAt: new Date(income.updated_at).getTime(),
+  });
 
-        const template = {
-          id: uuidv4(),
-          userId: user.id,
-          ...transactionData,
-          nextDueDate,
-          createdAt: Date.now(),
-        };
+  const transformBudgetFromDb = (budget) => ({
+    id: budget.id,
+    userId: budget.user_id,
+    month: budget.month,
+    totalBudget: parseFloat(budget.total_budget),
+    categories: budget.categories || [],
+    createdAt: new Date(budget.created_at).getTime(),
+    updatedAt: new Date(budget.updated_at).getTime(),
+  });
 
-        const updatedTemplates = [...recurringTemplates, template];
-        setItem(STORAGE_KEYS.RECURRING_TRANSACTIONS, updatedTemplates);
-      } catch (error) {
-        console.error('Error saving recurring template:', error);
-      }
-    }
-  }, [user]);
+  const transformGoalFromDb = (goal) => ({
+    id: goal.id,
+    userId: goal.user_id,
+    name: goal.name,
+    targetAmount: parseFloat(goal.target_amount),
+    currentAmount: parseFloat(goal.current_amount || 0),
+    description: goal.description,
+    deadline: goal.deadline ? new Date(goal.deadline).getTime() : null,
+    category: goal.category,
+    contributions: goal.contributions || [],
+    createdAt: new Date(goal.created_at).getTime(),
+    updatedAt: new Date(goal.updated_at).getTime(),
+  });
 
   // EXPENSE METHODS
-  const addExpense = useCallback((expenseData) => {
+  const addExpense = useCallback(async (expenseData) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const newExpense = {
-        id: uuidv4(),
-        userId: user.id,
-        ...expenseData,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert({
+          user_id: user.id,
+          category: expenseData.category,
+          amount: expenseData.amount,
+          description: expenseData.description,
+          date: new Date(expenseData.date).toISOString(),
+          payment_method: expenseData.paymentMethod,
+          recurrence: expenseData.recurrence || 'none',
+        })
+        .select()
+        .single();
 
-      const updatedExpenses = [...expenses, newExpense];
-      setExpenses(updatedExpenses);
-      setItem(STORAGE_KEYS.EXPENSES, updatedExpenses);
+      if (error) {
+        console.error('Error adding expense:', error);
+        return { success: false, error: error.message };
+      }
 
-      // Save recurring template if applicable
-      saveRecurringTemplate(expenseData);
+      const newExpense = transformExpenseFromDb(data);
+      setExpenses((prev) => [newExpense, ...prev]);
 
       return { success: true, expense: newExpense };
     } catch (error) {
       console.error('Error adding expense:', error);
       return { success: false, error: 'Failed to add expense' };
     }
-  }, [user, expenses, saveRecurringTemplate]);
+  }, [user]);
 
-  const updateExpense = useCallback((id, updates) => {
+  const updateExpense = useCallback(async (id, updates) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedExpenses = expenses.map((expense) =>
-        expense.id === id
-          ? { ...expense, ...updates, updatedAt: Date.now() }
-          : expense
-      );
+      const updateData = {};
+      if (updates.category !== undefined) updateData.category = updates.category;
+      if (updates.amount !== undefined) updateData.amount = updates.amount;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.date !== undefined) updateData.date = new Date(updates.date).toISOString();
+      if (updates.paymentMethod !== undefined) updateData.payment_method = updates.paymentMethod;
+      if (updates.recurrence !== undefined) updateData.recurrence = updates.recurrence;
 
-      setExpenses(updatedExpenses);
-      setItem(STORAGE_KEYS.EXPENSES, updatedExpenses);
+      const { data, error } = await supabase
+        .from('expenses')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating expense:', error);
+        return { success: false, error: error.message };
+      }
+
+      const updatedExpense = transformExpenseFromDb(data);
+      setExpenses((prev) => prev.map((e) => (e.id === id ? updatedExpense : e)));
 
       return { success: true };
     } catch (error) {
       console.error('Error updating expense:', error);
       return { success: false, error: 'Failed to update expense' };
     }
-  }, [user, expenses]);
+  }, [user]);
 
-  const deleteExpense = useCallback((id) => {
+  const deleteExpense = useCallback(async (id) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedExpenses = expenses.filter((expense) => expense.id !== id);
-      setExpenses(updatedExpenses);
-      setItem(STORAGE_KEYS.EXPENSES, updatedExpenses);
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
 
+      if (error) {
+        console.error('Error deleting expense:', error);
+        return { success: false, error: error.message };
+      }
+
+      setExpenses((prev) => prev.filter((e) => e.id !== id));
       return { success: true };
     } catch (error) {
       console.error('Error deleting expense:', error);
       return { success: false, error: 'Failed to delete expense' };
     }
-  }, [user, expenses]);
+  }, [user]);
 
   // BUDGET METHODS
-  const createBudget = useCallback((budgetData) => {
+  const createBudget = useCallback(async (budgetData) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const newBudget = {
-        id: uuidv4(),
-        userId: user.id,
-        ...budgetData,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
+      const { data, error } = await supabase
+        .from('budgets')
+        .insert({
+          user_id: user.id,
+          month: budgetData.month,
+          total_budget: budgetData.totalBudget,
+          categories: budgetData.categories || [],
+        })
+        .select()
+        .single();
 
-      const updatedBudgets = [...budgets, newBudget];
-      setBudgets(updatedBudgets);
-      setItem(STORAGE_KEYS.BUDGETS, updatedBudgets);
+      if (error) {
+        console.error('Error creating budget:', error);
+        return { success: false, error: error.message };
+      }
+
+      const newBudget = transformBudgetFromDb(data);
+      setBudgets((prev) => [...prev, newBudget]);
 
       return { success: true, budget: newBudget };
     } catch (error) {
       console.error('Error creating budget:', error);
       return { success: false, error: 'Failed to create budget' };
     }
-  }, [user, budgets]);
+  }, [user]);
 
-  const updateBudget = useCallback((id, updates) => {
+  const updateBudget = useCallback(async (id, updates) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedBudgets = budgets.map((budget) =>
-        budget.id === id
-          ? { ...budget, ...updates, updatedAt: Date.now() }
-          : budget
-      );
+      const updateData = {};
+      if (updates.month !== undefined) updateData.month = updates.month;
+      if (updates.totalBudget !== undefined) updateData.total_budget = updates.totalBudget;
+      if (updates.categories !== undefined) updateData.categories = updates.categories;
 
-      setBudgets(updatedBudgets);
-      setItem(STORAGE_KEYS.BUDGETS, updatedBudgets);
+      const { data, error } = await supabase
+        .from('budgets')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating budget:', error);
+        return { success: false, error: error.message };
+      }
+
+      const updatedBudget = transformBudgetFromDb(data);
+      setBudgets((prev) => prev.map((b) => (b.id === id ? updatedBudget : b)));
 
       return { success: true };
     } catch (error) {
       console.error('Error updating budget:', error);
       return { success: false, error: 'Failed to update budget' };
     }
-  }, [user, budgets]);
+  }, [user]);
 
-  const deleteBudget = useCallback((id) => {
+  const deleteBudget = useCallback(async (id) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedBudgets = budgets.filter((budget) => budget.id !== id);
-      setBudgets(updatedBudgets);
-      setItem(STORAGE_KEYS.BUDGETS, updatedBudgets);
+      const { error } = await supabase
+        .from('budgets')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
 
+      if (error) {
+        console.error('Error deleting budget:', error);
+        return { success: false, error: error.message };
+      }
+
+      setBudgets((prev) => prev.filter((b) => b.id !== id));
       return { success: true };
     } catch (error) {
       console.error('Error deleting budget:', error);
       return { success: false, error: 'Failed to delete budget' };
     }
-  }, [user, budgets]);
+  }, [user]);
 
   // INCOME METHODS
-  const addIncome = useCallback((incomeData) => {
+  const addIncome = useCallback(async (incomeData) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const newIncome = {
-        id: uuidv4(),
-        userId: user.id,
-        ...incomeData,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
+      const { data, error } = await supabase
+        .from('income')
+        .insert({
+          user_id: user.id,
+          category: incomeData.category,
+          amount: incomeData.amount,
+          description: incomeData.description,
+          date: new Date(incomeData.date).toISOString(),
+          recurrence: incomeData.recurrence || 'none',
+        })
+        .select()
+        .single();
 
-      const updatedIncome = [...income, newIncome];
-      setIncome(updatedIncome);
-      setItem(STORAGE_KEYS.INCOME, updatedIncome);
+      if (error) {
+        console.error('Error adding income:', error);
+        return { success: false, error: error.message };
+      }
 
-      // Save recurring template if applicable
-      saveRecurringTemplate({ ...incomeData, type: 'income' });
+      const newIncome = transformIncomeFromDb(data);
+      setIncome((prev) => [newIncome, ...prev]);
 
       return { success: true, income: newIncome };
     } catch (error) {
       console.error('Error adding income:', error);
       return { success: false, error: 'Failed to add income' };
     }
-  }, [user, income, saveRecurringTemplate]);
+  }, [user]);
 
-  const updateIncome = useCallback((id, updates) => {
+  const updateIncome = useCallback(async (id, updates) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedIncome = income.map((item) =>
-        item.id === id
-          ? { ...item, ...updates, updatedAt: Date.now() }
-          : item
-      );
+      const updateData = {};
+      if (updates.category !== undefined) updateData.category = updates.category;
+      if (updates.amount !== undefined) updateData.amount = updates.amount;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.date !== undefined) updateData.date = new Date(updates.date).toISOString();
+      if (updates.recurrence !== undefined) updateData.recurrence = updates.recurrence;
 
-      setIncome(updatedIncome);
-      setItem(STORAGE_KEYS.INCOME, updatedIncome);
+      const { data, error } = await supabase
+        .from('income')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating income:', error);
+        return { success: false, error: error.message };
+      }
+
+      const updatedIncome = transformIncomeFromDb(data);
+      setIncome((prev) => prev.map((i) => (i.id === id ? updatedIncome : i)));
 
       return { success: true };
     } catch (error) {
       console.error('Error updating income:', error);
       return { success: false, error: 'Failed to update income' };
     }
-  }, [user, income]);
+  }, [user]);
 
-  const deleteIncome = useCallback((id) => {
+  const deleteIncome = useCallback(async (id) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedIncome = income.filter((item) => item.id !== id);
-      setIncome(updatedIncome);
-      setItem(STORAGE_KEYS.INCOME, updatedIncome);
+      const { error } = await supabase
+        .from('income')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
 
+      if (error) {
+        console.error('Error deleting income:', error);
+        return { success: false, error: error.message };
+      }
+
+      setIncome((prev) => prev.filter((i) => i.id !== id));
       return { success: true };
     } catch (error) {
       console.error('Error deleting income:', error);
       return { success: false, error: 'Failed to delete income' };
     }
-  }, [user, income]);
+  }, [user]);
 
   // SAVINGS GOAL METHODS
-  const createGoal = useCallback((goalData) => {
+  const createGoal = useCallback(async (goalData) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const newGoal = {
-        id: uuidv4(),
-        userId: user.id,
-        ...goalData,
-        currentAmount: goalData.currentAmount || 0,
-        contributions: goalData.contributions || [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
+      const { data, error } = await supabase
+        .from('savings_goals')
+        .insert({
+          user_id: user.id,
+          name: goalData.name,
+          target_amount: goalData.targetAmount,
+          current_amount: goalData.currentAmount || 0,
+          description: goalData.description,
+          deadline: goalData.deadline ? new Date(goalData.deadline).toISOString() : null,
+          category: goalData.category,
+          contributions: goalData.contributions || [],
+        })
+        .select()
+        .single();
 
-      const updatedGoals = [...savingsGoals, newGoal];
-      setSavingsGoals(updatedGoals);
-      setItem(STORAGE_KEYS.GOALS, updatedGoals);
+      if (error) {
+        console.error('Error creating goal:', error);
+        return { success: false, error: error.message };
+      }
+
+      const newGoal = transformGoalFromDb(data);
+      setSavingsGoals((prev) => [newGoal, ...prev]);
 
       return { success: true, goal: newGoal };
     } catch (error) {
       console.error('Error creating goal:', error);
       return { success: false, error: 'Failed to create goal' };
     }
-  }, [user, savingsGoals]);
+  }, [user]);
 
-  const updateGoal = useCallback((id, updates) => {
+  const updateGoal = useCallback(async (id, updates) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedGoals = savingsGoals.map((goal) =>
-        goal.id === id
-          ? { ...goal, ...updates, updatedAt: Date.now() }
-          : goal
-      );
+      const updateData = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.targetAmount !== undefined) updateData.target_amount = updates.targetAmount;
+      if (updates.currentAmount !== undefined) updateData.current_amount = updates.currentAmount;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.deadline !== undefined) updateData.deadline = updates.deadline ? new Date(updates.deadline).toISOString() : null;
+      if (updates.category !== undefined) updateData.category = updates.category;
+      if (updates.contributions !== undefined) updateData.contributions = updates.contributions;
 
-      setSavingsGoals(updatedGoals);
-      setItem(STORAGE_KEYS.GOALS, updatedGoals);
+      const { data, error } = await supabase
+        .from('savings_goals')
+        .update(updateData)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating goal:', error);
+        return { success: false, error: error.message };
+      }
+
+      const updatedGoal = transformGoalFromDb(data);
+      setSavingsGoals((prev) => prev.map((g) => (g.id === id ? updatedGoal : g)));
 
       return { success: true };
     } catch (error) {
       console.error('Error updating goal:', error);
       return { success: false, error: 'Failed to update goal' };
     }
-  }, [user, savingsGoals]);
+  }, [user]);
 
-  const deleteGoal = useCallback((id) => {
+  const deleteGoal = useCallback(async (id) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedGoals = savingsGoals.filter((goal) => goal.id !== id);
-      setSavingsGoals(updatedGoals);
-      setItem(STORAGE_KEYS.GOALS, updatedGoals);
+      const { error } = await supabase
+        .from('savings_goals')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
 
+      if (error) {
+        console.error('Error deleting goal:', error);
+        return { success: false, error: error.message };
+      }
+
+      setSavingsGoals((prev) => prev.filter((g) => g.id !== id));
       return { success: true };
     } catch (error) {
       console.error('Error deleting goal:', error);
       return { success: false, error: 'Failed to delete goal' };
     }
-  }, [user, savingsGoals]);
+  }, [user]);
 
-  const addContribution = useCallback((goalId, amount) => {
+  const addContribution = useCallback(async (goalId, amount) => {
     if (!user) return { success: false, error: 'No user logged in' };
 
     try {
-      const updatedGoals = savingsGoals.map((goal) => {
-        if (goal.id === goalId) {
-          const contribution = {
-            amount,
-            date: Date.now(),
-          };
-          return {
-            ...goal,
-            currentAmount: (goal.currentAmount || 0) + amount,
-            contributions: [...(goal.contributions || []), contribution],
-            updatedAt: Date.now(),
-          };
-        }
-        return goal;
-      });
+      // Find the current goal
+      const currentGoal = savingsGoals.find((g) => g.id === goalId);
+      if (!currentGoal) {
+        return { success: false, error: 'Goal not found' };
+      }
 
-      setSavingsGoals(updatedGoals);
-      setItem(STORAGE_KEYS.GOALS, updatedGoals);
+      const contribution = {
+        amount,
+        date: Date.now(),
+      };
+
+      const newCurrentAmount = (currentGoal.currentAmount || 0) + amount;
+      const newContributions = [...(currentGoal.contributions || []), contribution];
+
+      const { data, error } = await supabase
+        .from('savings_goals')
+        .update({
+          current_amount: newCurrentAmount,
+          contributions: newContributions,
+        })
+        .eq('id', goalId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding contribution:', error);
+        return { success: false, error: error.message };
+      }
+
+      const updatedGoal = transformGoalFromDb(data);
+      setSavingsGoals((prev) => prev.map((g) => (g.id === goalId ? updatedGoal : g)));
 
       return { success: true };
     } catch (error) {
@@ -455,6 +611,9 @@ export const BudgetProvider = ({ children }) => {
     totalIncome,
     netWorth,
     budgetProgress,
+
+    // Refresh data
+    refreshData: loadUserData,
   };
 
   return <BudgetContext.Provider value={value}>{children}</BudgetContext.Provider>;
